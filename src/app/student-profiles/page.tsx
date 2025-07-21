@@ -7,7 +7,7 @@ import { Search, Filter, Plus } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { StudentProfileTile } from "@/components/student/student-profile-tile"
+import { StudentProfileTile, StudentProfileTileSkeleton } from "@/components/student/student-profile-tile"
 import { ConfirmationDialog } from "@/components/dialogs/confirmation-dialog"
 import { SuccessDialog } from "@/components/dialogs/success-dialog"
 import { useStudentStore } from "@/store/student-store"
@@ -48,15 +48,31 @@ export default function StudentProfilesPage() {
     total: 0,
   })
 
+  const [searchResults, setSearchResults] = useState<IStudent[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+
   useEffect(() => {
-    fetchStudents()
-  }, [searchQuery, statusFilter, pagination.page])
+    if (searchQuery.trim()) {
+      handleSearch()
+    } else {
+      fetchStudents()
+    }
+  }, [statusFilter, pagination.page])
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      handleSearch()
+    } else {
+      setSearchResults([])
+      setIsSearching(false)
+      fetchStudents()
+    }
+  }, [searchQuery])
 
   const fetchStudents = async () => {
     setLoading(true)
     try {
       const response = await apiClient.getStudents({
-        search: searchQuery,
         status: statusFilter,
         page: pagination.page,
         limit: 12,
@@ -77,14 +93,34 @@ export default function StudentProfilesPage() {
     }
   }
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value)
-    setPagination((prev) => ({ ...prev, page: 1 }))
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return
+
+    setIsSearching(true)
+    try {
+      const response = await apiClient.getStudents({
+        search: searchQuery,
+        status: statusFilter,
+        page: 1, // Always show search results on first page
+        limit: 12,
+      })
+
+      if (response.success && response.data) {
+        setSearchResults(response.data.students)
+        setPagination({
+          page: 1,
+          totalPages: response.data.totalPages,
+          total: response.data.total,
+        })
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to search students")
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   const handleStatusFilter = (value: string) => {
-    console.log(value);
-    
     setStatusFilter(value)
     setPagination((prev) => ({ ...prev, page: 1 }))
   }
@@ -122,19 +158,8 @@ export default function StudentProfilesPage() {
     }
   }
 
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch =
-      !searchQuery ||
-
-      student.name.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.name.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.schoolRollNo.toString().includes(searchQuery)
-
-    const matchesStatus = statusFilter === "all" || student.status == statusFilter
-
-    return matchesSearch && matchesStatus
-  })
+  const displayStudents = searchQuery.trim() ? searchResults : students
+  const showLoading = isLoading || isSearching
 
   return (
     <MainLayout
@@ -155,7 +180,7 @@ export default function StudentProfilesPage() {
             <Input
               placeholder="Search by name, student ID, or roll number..."
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -177,18 +202,25 @@ export default function StudentProfilesPage() {
           </div>
         </div>
 
+        {/* Search Results Info */}
+        {searchQuery.trim() && (
+          <div className="text-sm text-muted-foreground">
+            {isSearching ? "Searching..." : `Found ${searchResults.length} results for "${searchQuery}"`}
+          </div>
+        )}
+
         {/* Students Grid */}
-        {isLoading ? (
+        {showLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+              <StudentProfileTileSkeleton key={i} />
             ))}
           </div>
-        ) : filteredStudents.length > 0 ? (
+        ) : displayStudents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredStudents.map((student) => (
+            {displayStudents.map((student) => (
               <div key={student._id} className="relative group">
-                <StudentProfileTile student={student} onClick={() => handleStudentClick(student)} />
+                <StudentProfileTile student={student} onClick={() => handleStudentClick(student)} showDepartment />
                 <Button
                   variant="destructive"
                   size="sm"
@@ -202,7 +234,9 @@ export default function StudentProfilesPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No students found matching your criteria.</p>
+            <p className="text-muted-foreground">
+              {searchQuery.trim() ? "No students found matching your search criteria." : "No students found."}
+            </p>
             <Button onClick={() => router.push("/register-students")} className="mt-4">
               <Plus className="h-4 w-4 mr-2" />
               Add First Student
@@ -210,8 +244,8 @@ export default function StudentProfilesPage() {
           </div>
         )}
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
+        {/* Pagination - Only show for non-search results */}
+        {!searchQuery.trim() && pagination.totalPages > 1 && (
           <div className="flex justify-center gap-2">
             <Button
               variant="outline"

@@ -118,8 +118,8 @@ export default function StudentDetailPage() {
     )
   }
 
-  const fullName = `${student.name} ${student.name?.firstName} ${student.name?.middleName} ${student.name?.lastName}`
-  const initials = `${student.name} aaa ${student.name?.firstName[0]}${student.name?.lastName[0]}`
+  const fullName = `${student.name.firstName} ${student.name.middleName} ${student.name.lastName}`
+  const initials = `${student.name.firstName[0]}${student.name.lastName[0]}`
 
   return (
     <MainLayout
@@ -295,7 +295,7 @@ export default function StudentDetailPage() {
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Name</label>
                       <p className="text-sm">
-                        {`${student.fatherName} ${student.fatherName?.firstName} ${student.fatherName?.middleName} ${student.fatherName?.lastName}`}
+                        {`${student.fatherName.firstName} ${student.fatherName.middleName} ${student.fatherName.lastName}`}
                       </p>
                     </div>
                     <div>

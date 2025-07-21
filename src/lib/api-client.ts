@@ -81,6 +81,42 @@ class ApiClient {
       method: "DELETE",
     })
   }
+
+  // Department API methods
+  async getDepartments(): Promise<ApiResponse<any[]>> {
+    return this.request("/departments")
+  }
+
+  async getDepartment(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/departments/${id}`)
+  }
+
+  async createDepartment(data: any): Promise<ApiResponse<any>> {
+    return this.request("/departments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateDepartment(id: string, data: Partial<any>): Promise<ApiResponse<any>> {
+    return this.request(`/departments/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteDepartment(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/departments/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  async assignStudentToDepartment(studentId: string, departmentId: string | null): Promise<ApiResponse<any>> {
+    return this.request(`/students/${studentId}/department`, {
+      method: "PUT",
+      body: JSON.stringify({ departmentId }),
+    })
+  }
 }
 
 export const apiClient = new ApiClient()

@@ -6,20 +6,18 @@ export function withValidation(schema: ZodSchema) {
     try {
       const body = await req.json()
       const validatedData = schema.parse(body)
-
-      
       return handler(req, validatedData)
     } catch (error: any) {
-      // if (error.name === "ZodError") {
-      //   return NextResponse.json(
-      //     {
-      //       success: false,
-      //       error: "Validation failed",
-      //       details: error.errors,
-      //     },
-      //     { status: 400 },
-      //   )
-      // }
+      if (error.name === "ZodError") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: error.errors,
+          },
+          { status: 400 },
+        )
+      }
 
       return NextResponse.json(
         {

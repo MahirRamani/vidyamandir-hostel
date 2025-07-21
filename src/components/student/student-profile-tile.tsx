@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { IStudent } from "@/types/student"
 import { cn } from "@/lib/utils"
 
@@ -10,6 +11,7 @@ interface StudentProfileTileProps {
   student: IStudent
   onClick?: () => void
   className?: string
+  showDepartment?: boolean
 }
 
 const statusColors = {
@@ -20,45 +22,80 @@ const statusColors = {
   "NOC-Cancel": "bg-gray-100 text-gray-800 border-gray-200",
 }
 
-export function StudentProfileTile({ student, onClick, className }: StudentProfileTileProps) {
-  const fullName = `${student.name.firstName} ${student.name.middleName} ${student.name.lastName}`
-  const initials = `${student.name.firstName}${student.name.lastName}`
+export function StudentProfileTile({ student, onClick, className, showDepartment = false }: StudentProfileTileProps) {
+  const fullName = `${student.name?.firstName} ${student.name?.middleName} ${student.name?.lastName}`
+  const initials = `${student.name?.firstName}${student.name?.lastName}`
 
   return (
     <Card
-      className={cn("cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02]", className)}
+      className={cn("cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] rounded-sm", className)}
       onClick={onClick}
     >
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={student.profileImageUrl || "/placeholder.svg"} alt={fullName} />
-              <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <h3 className="font-semibold text-sm leading-none">{fullName}</h3>
-              <p className="text-xs text-muted-foreground">ID: {student.studentId}</p>
-            </div>
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={student.profileImageUrl || "/placeholder.svg"} alt={fullName} />
+            <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm leading-none truncate pb-0.5">{fullName}</h3>
+            {/* <p className="text-xs text-muted-foreground mt-1">ID: {student.studentId}</p> */}
+            <p className="text-xs text-muted-foreground mt-1">Standard: {student.standard}</p>
+            <p className="text-xs text-muted-foreground mt-1">Medium: {student.medium}</p>
           </div>
-          <Badge variant="outline" className={cn("text-xs", statusColors[student.status])}>
-            {student.status}
-          </Badge>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-          <div>
-            <span className="font-medium">Standard:</span> {student.standard}
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span className="font-medium text-muted-foreground">ID: {student.studentId}</span>
+            </div>
           </div>
-          <div>
-            <span className="font-medium">Roll No:</span> {student.schoolRollNo}
+          {showDepartment && (
+            <div className="text-xs">
+              <span className="font-medium text-muted-foreground">Department:</span>
+              {student.departmentId ? (
+                <Badge variant="outline" className="ml-1 text-xs bg-green-50 text-green-700 border-green-200">
+                  Assigned
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="ml-1 text-xs bg-gray-50 text-gray-600 border-gray-200">
+                  Unassigned
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Skeleton component for loading state
+export function StudentProfileTileSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center space-x-3">
+          <Skeleton className="h-24 w-24 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-20" />
           </div>
-          <div>
-            <span className="font-medium">Medium:</span> {student.medium}
-          </div>
-          <div>
-            <span className="font-medium">Year:</span> {student.admissionYear}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-8" />
+            </div>
+            <div className="space-y-1">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-12" />
+            </div>
           </div>
         </div>
       </CardContent>

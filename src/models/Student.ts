@@ -69,7 +69,7 @@ const studentSchema = new Schema<IStudent>(
       default: "Pending",
     },
     isSatsangi: { type: Boolean, default: false },
-    yearOfSatsang: { type: Number },
+    yearsOfSatsang: { type: Number },
   },
   {
     timestamps: true,
@@ -84,9 +84,9 @@ const studentSchema = new Schema<IStudent>(
 // studentSchema.index({ "name.firstName": "text", "name.lastName": "text" })
 // studentSchema.index({ schoolRollNo: 1 })
 
-// // Virtual for full name
-// studentSchema.virtual("fullName").get(function () {
-//   return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`
-// })
+// Virtual for full name
+studentSchema.virtual("fullName").get(function () {
+  return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`
+})
 
 export const Student = models.Student || model<IStudent>("Student", studentSchema)

@@ -55,7 +55,7 @@ export interface IStudent extends Document {
   nocDate: Date
   status: "Pending" | "Tested" | "Active" | "NOC" | "NOC-Cancel"
   isSatsangi: boolean
-  yearOfSatsang: number
+  yearsOfSatsang: number
 }
 
 export interface StudentFormData {
