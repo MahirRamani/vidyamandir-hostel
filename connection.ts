@@ -1,6 +1,8 @@
 import mongoose from "mongoose"
+// import dotenv from "dotenv"
 
-const MONGODB_URI = "mongodb://localhost:27017/vidhyamandir-hostel"
+// dotenv.config()
+const MONGODB_URI = process.env.MONGODB_URI
 // const MONGODB_URI = "mongodb://localhost:27017/room-allocation-system"
 
 console.log(`MONGODB_URI: ${MONGODB_URI}`)
@@ -15,8 +17,8 @@ const dbConnect = async () => {
   try {
     await mongoose.connect(MONGODB_URI)
     console.log("MongoDB connected successfully")
-  } catch (error: any) {
-    console.error("MongoDB connection error:", error.message)
+  } catch (error) {
+    console.error("MongoDB connection error:", error instanceof Error ? error.message : "Unknown error")
     throw error
   }
 }

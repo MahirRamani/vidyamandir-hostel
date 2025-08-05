@@ -3,64 +3,64 @@ import type { IStudent } from "@/types/student"
 
 const nameSchema = new Schema(
   {
-    firstName: { type: String, required: true },
-    middleName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    firstName: { type: String, },
+    middleName: { type: String, },
+    lastName: { type: String, },
   },
   { _id: false },
 )
 
 const addressSchema = new Schema(
   {
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    pincode: { type: String, required: true },
-    country: { type: String, required: true },
+    address: { type: String, },
+    city: { type: String, },
+    state: { type: String, },
+    pincode: { type: String, },
+    country: { type: String, },
   },
   { _id: false },
 )
 
 const studentSchema = new Schema<IStudent>(
   {
-    name: { type: nameSchema, required: true },
-    profileImageUrl: { type: String, required: true },
-    dateOfBirth: { type: Date, required: true },
+    name: { type: nameSchema, },
+    profileImageUrl: { type: String, },
+    dateOfBirth: { type: Date, },
     hobbies: [{ type: String }],
     skills: [{ type: String }],
     achievements: [{ type: String }],
-    studentId: { type: String, required: true, unique: true },
+    enquiryId: { type: String, unique: true },
+    studentId: { type: String, unique: true },
     isPermanentId: { type: Boolean, default: false },
     idConversionDate: { type: Date },
     roomId: { type: Schema.Types.ObjectId, ref: "Room" },
     bedNo: { type: Number },
     departmentId: { type: Schema.Types.ObjectId, ref: "Department" },
-    admissionYear: { type: String, required: true },
-    schoolRollNo: { type: Number, required: true },
-    standard: { type: Number, required: true },
+    admissionYear: { type: String, },
+    schoolRollNo: { type: Number, },
+    standard: { type: Number, },
     medium: {
       type: String,
       enum: ["Gujarati", "English", "Hindi"],
-      required: true,
     },
-    lastSchool: { type: String, required: true },
-    lastExamGiven: { type: String, required: true },
-    lastExamPercentage: { type: Number, required: true },
+    lastSchool: { type: String, },
+    lastExamGiven: { type: String, },
+    lastExamPercentage: { type: Number, },
     bloodGroup: {
       type: String,
       enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", "-"],
     },
     illnesses: [{ type: String }],
     allergies: [{ type: String }],
-    fatherName: { type: nameSchema, required: true },
-    fatherMobileNumber: { type: String, required: true },
-    fatherOccupation: { type: String, required: true },
+    fatherName: { type: nameSchema, },
+    fatherMobileNumber: { type: String, },
+    fatherOccupation: { type: String, },
     motherName: { type: nameSchema },
     motherMobileNumber: { type: String },
     motherOccupation: { type: String },
-    address: { type: addressSchema, required: true },
-    nativePlace: { type: String, required: true },
-    admissionDate: { type: Date, required: true },
+    address: { type: addressSchema, },
+    nativePlace: { type: String, },
+    admissionDate: { type: Date, },
     leavingDate: { type: Date },
     nocDate: { type: Date },
     status: {
@@ -85,8 +85,8 @@ const studentSchema = new Schema<IStudent>(
 // studentSchema.index({ schoolRollNo: 1 })
 
 // Virtual for full name
-studentSchema.virtual("fullName").get(function () {
-  return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`
-})
+// studentSchema.virtual("fullName").get(function () {
+//   return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`
+// })
 
 export const Student = models.Student || model<IStudent>("Student", studentSchema)

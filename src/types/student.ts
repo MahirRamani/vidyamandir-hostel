@@ -1,6 +1,6 @@
-import type { Document, Schema } from "mongoose"
+import type { Schema } from "mongoose"
 
-export interface IStudent extends Document {
+export interface IStudent {
   _id: string
   name: {
     firstName: string
@@ -12,12 +12,13 @@ export interface IStudent extends Document {
   hobbies: string[]
   skills: string[]
   achievements: string[]
+  enquiryId: string
   studentId: string
   isPermanentId: boolean
   idConversionDate: Date
-  roomId: Schema.Types.ObjectId
+  roomId: string | null
   bedNo: number
-  departmentId: Schema.Types.ObjectId
+  departmentId: string | null
   admissionYear: string
   schoolRollNo: number
   standard: number

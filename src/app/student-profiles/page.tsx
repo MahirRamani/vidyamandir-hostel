@@ -86,8 +86,8 @@ export default function StudentProfilesPage() {
           total: response.data.total,
         })
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch students")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to fetch students")
     } finally {
       setLoading(false)
     }
@@ -113,8 +113,8 @@ export default function StudentProfilesPage() {
           total: response.data.total,
         })
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to search students")
+    } catch (error ) {
+      toast.error( error instanceof Error ? error.message : "Failed to search students")
     } finally {
       setIsSearching(false)
     }
@@ -151,8 +151,8 @@ export default function StudentProfilesPage() {
       } else {
         toast.error(response.error || "Failed to delete student")
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete student")
+    } catch (error ) {
+      toast.error( error instanceof Error ? error.message : "Failed to delete student")
     } finally {
       setDeleteDialog({ open: false, student: null })
     }

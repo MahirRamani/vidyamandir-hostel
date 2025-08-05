@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { MultiStepForm } from "@/components/forms/multi-step-form"
+// import { MultiStepForm } from "@/components/forms/multi-step-form"
 import { BasicInfoForm } from "@/components/forms/basic-info-form"
 import { FamilyInfoForm } from "@/components/forms/family-info-form"
 import { HealthInfoForm } from "@/components/forms/health-info-form"
@@ -66,36 +66,36 @@ export default function EditStudentPage() {
         toast.error("Student not found")
         router.push("/student-profiles")
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch student details")
+    } catch (error) {
+      toast.error( error instanceof Error ? error.message : "Failed to fetch student details")
       router.push("/student-profiles")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleFormComplete = async (formData: any) => {
-    if (!student) return
+  // const handleFormComplete = async (formData: any) => {
+  //   if (!student) return
 
-    try {
-      const response = await apiClient.updateStudent(student._id, formData)
+  //   try {
+  //     const response = await apiClient.updateStudent(student._id, formData)
 
-      if (response.success) {
-        setShowSuccess(true)
-        toast.success("Student updated successfully!")
-      } else {
-        toast.error(response.error || "Failed to update student")
-      }
-    } catch (error: any) {
-      console.error("Update error:", error)
-      toast.error(error.message || "Failed to update student")
-    }
-  }
+  //     if (response.success) {
+  //       setShowSuccess(true)
+  //       toast.success("Student updated successfully!")
+  //     } else {
+  //       toast.error(response.error || "Failed to update student")
+  //     }
+  //   } catch (error) {
+  //     console.error("Update error:", error)
+  //     toast.error( error instanceof Error ? error.message : "Failed to update student")
+  //   }
+  // }
 
-  const handleSuccessClose = () => {
-    setShowSuccess(false)
-    router.push(`/student-profiles/${student?._id}`)
-  }
+  // const handleSuccessClose = () => {
+  //   setShowSuccess(false)
+  //   router.push(`/student-profiles/${student?._id}`)
+  // }
 
   if (isLoading) {
     return (
@@ -140,7 +140,7 @@ export default function EditStudentPage() {
       achievements: student.achievements || [],
       status: student.status,
       isSatsangi: student.isSatsangi,
-      yearsOfSatsang: student.yearOfSatsang,
+      yearsOfSatsang: student.yearsOfSatsang,
     },
     familyInfo: {
       fatherName: student.fatherName,
@@ -178,7 +178,7 @@ export default function EditStudentPage() {
           Back to Student Details
         </Button>
 
-        <MultiStepForm
+        {/* <MultiStepForm
           steps={steps.map((step) => ({
             ...step,
             component: (props: any) => (
@@ -187,7 +187,7 @@ export default function EditStudentPage() {
           }))}
           onComplete={handleFormComplete}
           className="max-w-4xl mx-auto"
-        />
+        /> */}
 
         <SuccessDialog
           open={showSuccess}

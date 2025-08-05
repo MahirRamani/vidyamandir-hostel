@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import connectDB from "@/lib/db/connection"
+import connectDB from "../../../../../connection"
 import { Student } from "@/models/Student"
 import { withErrorHandling } from "@/lib/middleware/validation"
 

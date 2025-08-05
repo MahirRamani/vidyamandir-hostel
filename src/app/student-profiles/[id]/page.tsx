@@ -56,8 +56,8 @@ export default function StudentDetailPage() {
         toast.error("Student not found")
         router.push("/student-profiles")
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch student details")
+    } catch (error ) {
+      toast.error( error instanceof Error ? error.message : "Failed to fetch student details")
       router.push("/student-profiles")
     } finally {
       setIsLoading(false)
@@ -80,8 +80,8 @@ export default function StudentDetailPage() {
       } else {
         toast.error(response.error || "Failed to delete student")
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete student")
+    } catch (error ) {
+      toast.error( error instanceof Error ? error.message : "Failed to delete student")
     } finally {
       setDeleteDialog(false)
     }
@@ -227,10 +227,10 @@ export default function StudentDetailPage() {
                       <label className="text-sm font-medium text-muted-foreground">Satsangi</label>
                       <p className="text-sm">{student.isSatsangi ? "Yes" : "No"}</p>
                     </div>
-                    {student.isSatsangi && student.yearOfSatsang && (
+                    {student.isSatsangi && student.yearsOfSatsang && (
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">Years of Satsang</label>
-                        <p className="text-sm">{student.yearOfSatsang}</p>
+                        <p className="text-sm">{student.yearsOfSatsang}</p>
                       </div>
                     )}
                   </div>

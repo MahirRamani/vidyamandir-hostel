@@ -1,10 +1,10 @@
-import type { Document } from "mongoose"
+import type { Document, Schema } from "mongoose"
 
 export interface IRoom extends Document {
   _id: string
   number: string
   capacity: number
-  buildingId: string
+  buildingId: Schema.Types.ObjectId
   createdAt: Date
   updatedAt: Date
 }

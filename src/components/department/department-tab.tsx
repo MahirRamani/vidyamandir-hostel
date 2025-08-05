@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef } from "react"
-import { MoreHorizontal, Users, Crown, UserCheck, Edit, Trash2 } from "lucide-react"
+import { MoreHorizontal, Users, Crown, UserCheck, Edit, Trash2, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,34 +13,47 @@ import type { IDepartment } from "@/types/department"
 import type { IStudent } from "@/types/student"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { ConfirmationDialog } from "../dialogs/confirmation-dialog"
 
 interface DepartmentTabProps {
   department: IDepartment
   onEdit: (department: IDepartment) => void
   onDelete: (department: IDepartment) => void
   onStudentDrop: (student: IStudent, department: IDepartment) => void
+  onStudentRemove: (student: IStudent, department: IDepartment) => void
 }
 
-export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: DepartmentTabProps) {
+export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onStudentRemove }: DepartmentTabProps) {
   const { students } = useDepartmentStore()
   const [isDragOver, setIsDragOver] = useState(false)
   const [draggedStudent, setDraggedStudent] = useState<IStudent | null>(null)
-  const [insertionIndex, setInsertionIndex] = useState<number | null>(null)
-  const dragTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const [dropZoneActive, setDropZoneActive] = useState(false)
+  const dragCounterRef = useRef<number>(0)
+
+  // Add confirmation dialog state for student removal
+  const [removeDialog, setRemoveDialog] = useState<{
+    open: boolean
+    student: IStudent | null
+  }>({ open: false, student: null })
+
+  const handleRemoveStudent = async () => {
+    if (!removeDialog.student) return
+
+    await onStudentRemove(removeDialog.student, department)
+    setRemoveDialog({ open: false, student: null })
+  }
 
   // Filter students assigned to this department
   const departmentStudents = students.filter((student) => student.departmentId?.toString() === department._id)
 
-  // Find HOD and Sub HOD students by their IDs
-  const hodStudent = students.find((student) => student._id === department.HOD)
-  const subHodStudent = students.find((student) => student._id === department.subHOD)
-
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault()
-    e.dataTransfer.dropEffect = "move"
-    
-    if (!isDragOver) {
+    dragCounterRef.current++
+
+    if (dragCounterRef.current === 1) {
       setIsDragOver(true)
+      setDropZoneActive(true)
+
       // Parse dragged student data for preview
       try {
         const studentData = e.dataTransfer.getData("application/json")
@@ -52,47 +65,30 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: D
         // Silently handle parsing errors
       }
     }
-
-    // Clear any existing timeout
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current)
-    }
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
-    
-    // Only hide drag over state if we're leaving the container entirely
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      // Add a small delay to prevent flicker
-      dragTimeoutRef.current = setTimeout(() => {
-        setIsDragOver(false)
-        setDraggedStudent(null)
-        setInsertionIndex(null)
-      }, 100)
+    dragCounterRef.current--
+
+    if (dragCounterRef.current === 0) {
+      setIsDragOver(false)
+      setDropZoneActive(false)
+      setDraggedStudent(null)
     }
   }
 
-  const handleDragEnter = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
-    
-    // Clear timeout if re-entering
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current)
-    }
+    e.dataTransfer.dropEffect = "move"
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    
-    // Clear timeout
-    if (dragTimeoutRef.current) {
-      clearTimeout(dragTimeoutRef.current)
-    }
-    
+    dragCounterRef.current = 0
     setIsDragOver(false)
+    setDropZoneActive(false)
     setDraggedStudent(null)
-    setInsertionIndex(null)
 
     const studentData = e.dataTransfer.getData("application/json")
     if (studentData) {
@@ -105,9 +101,10 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: D
           return
         }
 
-        // Check if student is already assigned to another department
-        if (student.departmentId && student.departmentId !== department._id) {
-          toast.info(`Reassigning student from previous department to ${department.name}`)
+        // Only allow dropping unassigned students
+        if (student.departmentId) {
+          toast.error("Student is already assigned to another department")
+          return
         }
 
         onStudentDrop(student, department)
@@ -122,19 +119,61 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: D
     <div
       className={cn(
         "h-full p-6 transition-all duration-300 min-h-[600px] relative",
-        isDragOver && "bg-blue-50/50"
+        isDragOver && dropZoneActive && "bg-gradient-to-br from-blue-50/70 to-purple-50/70"
       )}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
       onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {/* Enhanced Drop Zone Overlay */}
+      {dropZoneActive && (
+        <div className="absolute inset-6 bg-gradient-to-br from-blue-100/90 to-purple-100/90 rounded-2xl border-3 border-blue-400 border-dashed backdrop-blur-sm z-20 flex items-center justify-center animate-pulse">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+              <Users className="w-10 h-10 text-white" />
+            </div>
+            <div className="text-blue-700 text-2xl font-bold mb-2">
+              Drop student here
+            </div>
+            <div className="text-blue-600 text-lg">
+              Assign to {department.name}
+            </div>
+            <div className="text-blue-500 text-sm mt-2">
+              {departmentStudents.length} students currently assigned
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Preview */}
+      {isDragOver && draggedStudent && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <div className="bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl border-2 border-blue-300 p-4">
+            <div className="text-center mb-3">
+              <div className="text-blue-600 text-sm font-semibold">
+                Assigning to {department.name}
+              </div>
+            </div>
+            <div className="scale-90 opacity-90">
+              <StudentProfileTile
+                student={draggedStudent}
+                className="border-blue-300 bg-blue-50 shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Department Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className={cn(
+        "flex items-center justify-between mb-6 transition-opacity duration-300",
+        isDragOver && dropZoneActive && "opacity-60"
+      )}>
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h2 className="text-2xl font-bold">{department.name}</h2>
-            <Badge variant="outline" className="flex items-center gap-1">
+            <h2 className="text-2xl font-bold text-gray-800">{department.name}</h2>
+            <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
               <Users className="h-3 w-3" />
               {departmentStudents.length} Students
             </Badge>
@@ -143,7 +182,7 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: D
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:bg-gray-100">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -160,102 +199,63 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: D
         </DropdownMenu>
       </div>
 
-      {/* Floating Drop Zone Preview */}
-      {isDragOver && draggedStudent && (
-        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-2xl border-2 border-blue-300 p-4 max-w-sm">
-            <div className="text-center mb-3">
-              <div className="text-blue-600 text-sm font-semibold">Drop to assign to {department.name}</div>
-            </div>
-            <div className="opacity-80 scale-90 transform">
-              <StudentProfileTile 
-                student={draggedStudent} 
-                className="border-blue-300 bg-blue-50 shadow-lg" 
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Persistent Drop Zone Message */}
-      {isDragOver && (
-        <div className="absolute inset-6 bg-gradient-to-br from-blue-100/80 to-blue-200/60 rounded-xl border-2 border-blue-300 border-dashed backdrop-blur-sm z-10">
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="text-blue-700 text-xl font-bold mb-2">
-                Drop student here to assign to {department.name}
-              </div>
-              <div className="text-blue-600 text-sm">
-                {departmentStudents.length} students currently assigned
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Content - wrapped in relative container to ensure proper z-index layering */}
-      <div className={cn("relative", isDragOver && "opacity-60")}>
-        {/* HOD and Sub HOD */}
-        {(hodStudent || subHodStudent) && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-3">Department Leadership</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {hodStudent && (
-                <Card className="border-yellow-200 bg-yellow-50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Crown className="h-4 w-4 text-yellow-600" />
-                      Head of Department
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <StudentProfileTile student={hodStudent} className="border-yellow-300" />
-                  </CardContent>
-                </Card>
-              )}
-              {subHodStudent && (
-                <Card className="border-blue-200 bg-blue-50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-blue-600" />
-                      Sub Head of Department
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <StudentProfileTile student={subHodStudent} className="border-blue-300" />
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        )}
-
+      {/* Content */}
+      <div className={cn(
+        "transition-opacity duration-300 relative",
+        isDragOver && dropZoneActive && "opacity-60"
+      )}>
         {/* Department Students */}
         <div>
-          <h3 className="font-semibold mb-4">Department Students ({departmentStudents.length})</h3>
+
+
           {departmentStudents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {departmentStudents.map((student) => (
-                <div
-                  key={student._id}
-                  className="transition-all duration-200"
-                >
-                  <StudentProfileTile
-                    student={student}
-                    className={cn(
-                      "transition-all duration-200",
-                      student._id === department.HOD && "border-yellow-300 bg-yellow-50",
-                      student._id === department.subHOD && "border-blue-300 bg-blue-50"
-                    )}
-                  />
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {departmentStudents.map((student) => (
+                  <div
+                    key={student._id}
+                    className="transform hover:scale-105 transition-transform duration-200 relative group"
+                  >
+                    <StudentProfileTile
+                      student={student}
+                      className="border-green-200 bg-green-50 shadow-sm hover:shadow-md transition-shadow duration-200"
+                    />
+
+                    {/* Remove Button - appears on hover */}
+                    <button
+                      onClick={() => setRemoveDialog({ open: true, student })}
+                      className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:scale-110"
+                      title={`Remove ${student.name.firstName} from ${department.name}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Remove Student Confirmation Dialog */}
+              <ConfirmationDialog
+                open={removeDialog.open}
+                onOpenChange={(open) => setRemoveDialog({ open, student: null })}
+                title="Remove Student from Department"
+                description={
+                  removeDialog.student
+                    ? `Are you sure you want to remove ${removeDialog.student.name.firstName} ${removeDialog.student.name.lastName} from ${department.name}? The student will become unassigned and available for assignment to other departments.`
+                    : ""
+                }
+                confirmText="Remove"
+                cancelText="Cancel"
+                variant="destructive"
+                onConfirm={handleRemoveStudent}
+              />
+            </>
           ) : (
-            <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50/50">
-              <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-muted-foreground font-medium">No students assigned to this department</p>
-              <p className="text-sm text-muted-foreground mt-1">Drag students from the left panel to assign them</p>
+            <div className="text-center py-16 border-3 border-dashed border-gray-300 rounded-2xl bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-300">
+              <Users className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+              <p className="text-xl font-semibold text-gray-600 mb-2">No students assigned to this department</p>
+              <p className="text-gray-500 max-w-md mx-auto">
+                Drag unassigned students from the left panel to assign them to this department
+              </p>
             </div>
           )}
         </div>
@@ -263,537 +263,3 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: D
     </div>
   )
 }
-// "use client"
-
-// import type React from "react"
-// import { useState } from "react"
-// import { MoreHorizontal, Users, Crown, UserCheck, Edit, Trash2 } from "lucide-react"
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// import { Button } from "@/components/ui/button"
-// import { Badge } from "@/components/ui/badge"
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-// import { StudentProfileTile } from "@/components/student/student-profile-tile"
-// import { useDepartmentStore } from "@/store/department-store"
-// import type { IDepartment } from "@/types/department"
-// import type { IStudent } from "@/types/student"
-// import { cn } from "@/lib/utils"
-// import { toast } from "sonner"
-
-// interface DepartmentTabProps {
-//   department: IDepartment
-//   onEdit: (department: IDepartment) => void
-//   onDelete: (department: IDepartment) => void
-//   onStudentDrop: (student: IStudent, department: IDepartment) => void
-// }
-
-// export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: DepartmentTabProps) {
-//   const { students } = useDepartmentStore()
-//   const [isDragOver, setIsDragOver] = useState(false)
-
-//   // Filter students assigned to this department
-//   const departmentStudents = students.filter((student) => student.departmentId === department._id)
-
-//   // Find HOD and Sub HOD students by their IDs
-//   const hodStudent = students.find((student) => student._id === department.HOD)
-//   const subHodStudent = students.find((student) => student._id === department.subHOD)
-
-//   const handleDragOver = (e: React.DragEvent) => {
-//     e.preventDefault()
-//     e.dataTransfer.dropEffect = "move"
-//     setIsDragOver(true)
-//   }
-
-//   const handleDragLeave = (e: React.DragEvent) => {
-//     e.preventDefault()
-//     setIsDragOver(false)
-//   }
-
-//   const handleDrop = (e: React.DragEvent) => {
-//     e.preventDefault()
-//     setIsDragOver(false)
-
-//     const studentData = e.dataTransfer.getData("application/json")
-//     if (studentData) {
-//       try {
-//         const student = JSON.parse(studentData)
-
-//         // Check if student is already assigned to this department
-//         if (student.departmentId === department._id) {
-//           toast.error("Student is already assigned to this department")
-//           return
-//         }
-
-//         // Check if student is already assigned to another department
-//         if (student.departmentId && student.departmentId !== department._id) {
-//           toast.info(`Reassigning student from previous department to ${department.name}`)
-//         }
-
-//         onStudentDrop(student, department)
-//       } catch (error) {
-//         console.error("Error parsing dropped student data:", error)
-//         toast.error("Failed to assign student")
-//       }
-//     }
-//   }
-
-//   return (
-//     <div
-//       className={cn(
-//         "h-full p-6 transition-all duration-300 min-h-[600px]",
-//         isDragOver && "bg-blue-50 border-2 border-blue-300 border-dashed rounded-lg",
-//       )}
-//       onDragOver={handleDragOver}
-//       onDragLeave={handleDragLeave}
-//       onDrop={handleDrop}
-//     >
-//       {/* Department Header */}
-//       <div className="flex items-center justify-between mb-6">
-//         <div>
-//           <div className="flex items-center gap-3 mb-2">
-//             <h2 className="text-2xl font-bold">{department.name}</h2>
-//             <Badge variant="outline" className="flex items-center gap-1">
-//               <Users className="h-3 w-3" />
-//               {departmentStudents.length} Students
-//             </Badge>
-//           </div>
-//           <p className="text-muted-foreground">{department.description}</p>
-//         </div>
-//         <DropdownMenu>
-//           <DropdownMenuTrigger asChild>
-//             <Button variant="ghost" size="icon">
-//               <MoreHorizontal className="h-4 w-4" />
-//             </Button>
-//           </DropdownMenuTrigger>
-//           <DropdownMenuContent align="end">
-//             <DropdownMenuItem onClick={() => onEdit(department)}>
-//               <Edit className="h-4 w-4 mr-2" />
-//               Edit Department
-//             </DropdownMenuItem>
-//             <DropdownMenuItem onClick={() => onDelete(department)} className="text-destructive">
-//               <Trash2 className="h-4 w-4 mr-2" />
-//               Delete Department
-//             </DropdownMenuItem>
-//           </DropdownMenuContent>
-//         </DropdownMenu>
-//       </div>
-
-//       {/* Drop Zone Message */}
-//       {isDragOver && (
-//         <div className="text-center py-12 mb-6 bg-blue-100 rounded-lg border-2 border-blue-300 border-dashed">
-//           <div className="text-blue-600 text-lg font-semibold">Drop student here to assign to {department.name}</div>
-//           <div className="text-blue-500 text-sm mt-2">{departmentStudents.length} students currently assigned</div>
-//         </div>
-//       )}
-
-//       {/* HOD and Sub HOD */}
-//       {(hodStudent || subHodStudent) && (
-//         <div className="mb-6">
-//           <h3 className="font-semibold mb-3">Department Leadership</h3>
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//             {hodStudent && (
-//               <Card className="border-yellow-200 bg-yellow-50">
-//                 <CardHeader className="pb-2">
-//                   <CardTitle className="text-sm flex items-center gap-2">
-//                     <Crown className="h-4 w-4 text-yellow-600" />
-//                     Head of Department
-//                   </CardTitle>
-//                 </CardHeader>
-//                 <CardContent className="pt-0">
-//                   <StudentProfileTile student={hodStudent} className="border-yellow-300" />
-//                 </CardContent>
-//               </Card>
-//             )}
-//             {subHodStudent && (
-//               <Card className="border-blue-200 bg-blue-50">
-//                 <CardHeader className="pb-2">
-//                   <CardTitle className="text-sm flex items-center gap-2">
-//                     <UserCheck className="h-4 w-4 text-blue-600" />
-//                     Sub Head of Department
-//                   </CardTitle>
-//                 </CardHeader>
-//                 <CardContent className="pt-0">
-//                   <StudentProfileTile student={subHodStudent} className="border-blue-300" />
-//                 </CardContent>
-//               </Card>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Department Students */}
-//       <div>
-//         <h3 className="font-semibold mb-4">Department Students ({departmentStudents.length})</h3>
-//         {departmentStudents.length > 0 ? (
-//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-//             {departmentStudents.map((student) => (
-//               <StudentProfileTile
-//                 key={student._id}
-//                 student={student}
-//                 className={cn(
-//                   "transition-all duration-200",
-//                   student._id === department.HOD && "border-yellow-300 bg-yellow-50",
-//                   student._id === department.subHOD && "border-blue-300 bg-blue-50",
-//                 )}
-//               />
-//             ))}
-//           </div>
-//         ) : (
-//           <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-//             <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-//             <p className="text-muted-foreground">No students assigned to this department</p>
-//             <p className="text-sm text-muted-foreground mt-1">Drag students from the left panel to assign them</p>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   )
-// }
-// // "use client"
-
-// // import type React from "react"
-// // import { useState } from "react"
-// // import { MoreHorizontal, Users, Crown, UserCheck, Edit, Trash2 } from "lucide-react"
-// // import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// // import { Button } from "@/components/ui/button"
-// // import { Badge } from "@/components/ui/badge"
-// // import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-// // import { StudentProfileTile } from "@/components/student/student-profile-tile"
-// // import { useDepartmentStore } from "@/store/department-store"
-// // import type { IDepartment } from "@/types/department"
-// // import type { IStudent } from "@/types/student"
-// // import { cn } from "@/lib/utils"
-// // import { toast } from "sonner"
-
-// // interface DepartmentTabProps {
-// //   department: IDepartment
-// //   onEdit: (department: IDepartment) => void
-// //   onDelete: (department: IDepartment) => void
-// //   onStudentDrop: (student: IStudent, department: IDepartment) => void
-// // }
-
-// // export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: DepartmentTabProps) {
-// //   const { students } = useDepartmentStore()
-// //   const [isDragOver, setIsDragOver] = useState(false)
-
-// //   // Filter students assigned to this department
-// //   const departmentStudents = students.filter((student) => student.departmentId?.toString() === department._id)
-
-// //   // Find HOD and Sub HOD students by their IDs
-// //   const hodStudent = students.find((student) => student._id === department.HOD)
-// //   const subHodStudent = students.find((student) => student._id === department.subHOD)
-
-// //   const handleDragOver = (e: React.DragEvent) => {
-// //     e.preventDefault()
-// //     e.dataTransfer.dropEffect = "move"
-// //     setIsDragOver(true)
-// //   }
-
-// //   const handleDragLeave = (e: React.DragEvent) => {
-// //     e.preventDefault()
-// //     setIsDragOver(false)
-// //   }
-
-// //   const handleDrop = (e: React.DragEvent) => {
-// //     e.preventDefault()
-// //     setIsDragOver(false)
-
-// //     const studentData = e.dataTransfer.getData("application/json")
-// //     if (studentData) {
-// //       try {
-// //         const student = JSON.parse(studentData)
-
-// //         // Check if student is already assigned to this department
-// //         if (student.departmentId === department._id) {
-// //           toast.error("Student is already assigned to this department")
-// //           return
-// //         }
-
-// //         // Check if student is already assigned to another department
-// //         if (student.departmentId && student.departmentId !== department._id) {
-// //           toast.info(`Reassigning student from previous department to ${department.name}`)
-// //         }
-
-// //         onStudentDrop(student, department)
-// //       } catch (error) {
-// //         console.error("Error parsing dropped student data:", error)
-// //         toast.error("Failed to assign student")
-// //       }
-// //     }
-// //   }
-
-// //   return (
-// //     <div
-// //       className={cn(
-// //         "h-full p-6 transition-all duration-300 min-h-[600px]",
-// //         isDragOver && "bg-blue-50 border-2 border-blue-300 border-dashed rounded-lg",
-// //       )}
-// //       onDragOver={handleDragOver}
-// //       onDragLeave={handleDragLeave}
-// //       onDrop={handleDrop}
-// //     >
-// //       {/* Department Header */}
-// //       <div className=" items-center justify-between">
-// //         {/* <div>
-// //           <div className="flex items-center gap-3 mb-2">
-// //             <h2 className="text-2xl font-bold">{department.name}</h2>
-// //             <Badge variant="outline" className="flex items-center gap-1">
-// //               <Users className="h-3 w-3" />
-// //               {departmentStudents.length} Students
-// //             </Badge>
-// //           </div>
-// //           <p className="text-muted-foreground">{department.description}</p>
-// //         </div> */}
-// //         <DropdownMenu>
-// //           <DropdownMenuTrigger asChild>
-// //             <Button variant="ghost" size="icon">
-// //               <MoreHorizontal className="h-4 w-4" />
-// //             </Button>
-// //           </DropdownMenuTrigger>
-// //           <DropdownMenuContent align="end">
-// //             <DropdownMenuItem onClick={() => onEdit(department)}>
-// //               <Edit className="h-4 w-4 mr-2" />
-// //               Edit Department
-// //             </DropdownMenuItem>
-// //             <DropdownMenuItem onClick={() => onDelete(department)} className="text-destructive">
-// //               <Trash2 className="h-4 w-4 mr-2" />
-// //               Delete Department
-// //             </DropdownMenuItem>
-// //           </DropdownMenuContent>
-// //         </DropdownMenu>
-// //       </div>
-
-// //       {/* Drop Zone Message */}
-// //       {isDragOver && (
-// //         <div className="text-center py-12 mb-6 bg-blue-100 rounded-lg border-2 border-blue-300 border-dashed">
-// //           <div className="text-blue-600 text-lg font-semibold">Drop student here to assign to {department.name}</div>
-// //           <div className="text-blue-500 text-sm mt-2">{departmentStudents.length} students currently assigned</div>
-// //         </div>
-// //       )}
-
-// //       {/* HOD and Sub HOD */}
-// //       {(hodStudent || subHodStudent) && (
-// //         <div className="mb-6">
-// //           <h3 className="font-semibold mb-3">Department Leadership</h3>
-// //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-// //             {hodStudent && (
-// //               <Card className="border-yellow-200 bg-yellow-50">
-// //                 <CardHeader className="pb-2">
-// //                   <CardTitle className="text-sm flex items-center gap-2">
-// //                     <Crown className="h-4 w-4 text-yellow-600" />
-// //                     Head of Department
-// //                   </CardTitle>
-// //                 </CardHeader>
-// //                 <CardContent className="pt-0">
-// //                   <StudentProfileTile student={hodStudent} className="border-yellow-300" />
-// //                 </CardContent>
-// //               </Card>
-// //             )}
-// //             {subHodStudent && (
-// //               <Card className="border-blue-200 bg-blue-50">
-// //                 <CardHeader className="pb-2">
-// //                   <CardTitle className="text-sm flex items-center gap-2">
-// //                     <UserCheck className="h-4 w-4 text-blue-600" />
-// //                     Sub Head of Department
-// //                   </CardTitle>
-// //                 </CardHeader>
-// //                 <CardContent className="pt-0">
-// //                   <StudentProfileTile student={subHodStudent} className="border-blue-300" />
-// //                 </CardContent>
-// //               </Card>
-// //             )}
-// //           </div>
-// //         </div>
-// //       )}
-
-// //       {/* Department Students */}
-// //       <div>
-// //         <h3 className="font-semibold mb-4">Department Students ({departmentStudents.length})</h3>
-
-
-// //         {departmentStudents.length > 0 ? (
-// //           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-// //             {departmentStudents.map((student) => (
-// //               <StudentProfileTile
-// //                 key={student._id}
-// //                 student={student}
-// //                 className={cn(
-// //                   "transition-all duration-200",
-// //                   student._id === department.HOD && "border-yellow-300 bg-yellow-50",
-// //                   student._id === department.subHOD && "border-blue-300 bg-blue-50",
-// //                 )}
-// //               />
-// //             ))}
-// //           </div>
-// //         ) : (
-// //           <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-// //             <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-// //             <p className="text-muted-foreground">No students assigned to this department</p>
-// //             <p className="text-sm text-muted-foreground mt-1">Drag students from the left panel to assign them</p>
-// //           </div>
-// //         )}
-// //       </div>
-// //     </div>
-// //   )
-// // }
-// // // "use client"
-
-// // // import type React from "react"
-
-// // // import { useState } from "react"
-// // // import { MoreHorizontal, Users, Crown, UserCheck, Edit, Trash2 } from "lucide-react"
-// // // import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// // // import { Button } from "@/components/ui/button"
-// // // import { Badge } from "@/components/ui/badge"
-// // // import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-// // // import { StudentProfileTile } from "@/components/student/student-profile-tile"
-// // // import { useDepartmentStore } from "@/store/department-store"
-// // // import type { IDepartment } from "@/types/department"
-// // // import type { IStudent } from "@/types/student"
-
-// // // interface DepartmentTabProps {
-// // //   department: IDepartment
-// // //   onEdit: (department: IDepartment) => void
-// // //   onDelete: (department: IDepartment) => void
-// // //   onStudentDrop: (student: IStudent, department: IDepartment) => void
-// // // }
-
-// // // export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop }: DepartmentTabProps) {
-// // //   const { students } = useDepartmentStore()
-// // //   const [isDragOver, setIsDragOver] = useState(false)
-
-// // //   // Filter students assigned to this department
-// // //   const departmentStudents = students.filter((student) => student.departmentId === department._id)
-
-// // //   // Find HOD and Sub HOD students by their IDs
-// // //   const hodStudent = students.find((student) => student._id === department.HOD)
-// // //   const subHodStudent = students.find((student) => student._id === department.subHOD)
-
-// // //   const handleDragOver = (e: React.DragEvent) => {
-// // //     e.preventDefault()
-// // //     setIsDragOver(true)
-// // //   }
-
-// // //   const handleDragLeave = (e: React.DragEvent) => {
-// // //     e.preventDefault()
-// // //     setIsDragOver(false)
-// // //   }
-
-// // //   const handleDrop = (e: React.DragEvent) => {
-// // //     e.preventDefault()
-// // //     setIsDragOver(false)
-
-// // //     const studentData = e.dataTransfer.getData("application/json")
-// // //     if (studentData) {
-// // //       const student = JSON.parse(studentData)
-// // //       onStudentDrop(student, department)
-// // //     }
-// // //   }
-
-// // //   return (
-// // //     <div
-// // //       className={`h-full p-6 transition-all duration-200 ${
-// // //         isDragOver ? "bg-blue-50 border-2 border-blue-300 border-dashed" : ""
-// // //       }`}
-// // //       onDragOver={handleDragOver}
-// // //       onDragLeave={handleDragLeave}
-// // //       onDrop={handleDrop}
-// // //     >
-// // //       {/* Department Header */}
-// // //       <div className="flex items-center justify-between mb-6">
-// // //         <div>
-// // //           <div className="flex items-center gap-3 mb-2">
-// // //             <h2 className="text-2xl font-bold">{department.name}</h2>
-// // //             <Badge variant="outline" className="flex items-center gap-1">
-// // //               <Users className="h-3 w-3" />
-// // //               {departmentStudents.length} Students
-// // //             </Badge>
-// // //           </div>
-// // //           <p className="text-muted-foreground">{department.description}</p>
-// // //         </div>
-// // //         <DropdownMenu>
-// // //           <DropdownMenuTrigger asChild>
-// // //             <Button variant="ghost" size="icon">
-// // //               <MoreHorizontal className="h-4 w-4" />
-// // //             </Button>
-// // //           </DropdownMenuTrigger>
-// // //           <DropdownMenuContent align="end">
-// // //             <DropdownMenuItem onClick={() => onEdit(department)}>
-// // //               <Edit className="h-4 w-4 mr-2" />
-// // //               Edit Department
-// // //             </DropdownMenuItem>
-// // //             <DropdownMenuItem onClick={() => onDelete(department)} className="text-destructive">
-// // //               <Trash2 className="h-4 w-4 mr-2" />
-// // //               Delete Department
-// // //             </DropdownMenuItem>
-// // //           </DropdownMenuContent>
-// // //         </DropdownMenu>
-// // //       </div>
-
-// // //       {/* HOD and Sub HOD */}
-// // //       {(hodStudent || subHodStudent) && (
-// // //         <div className="mb-6">
-// // //           <h3 className="font-semibold mb-3">Department Leadership</h3>
-// // //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-// // //             {hodStudent && (
-// // //               <Card className="border-yellow-200 bg-yellow-50">
-// // //                 <CardHeader className="pb-2">
-// // //                   <CardTitle className="text-sm flex items-center gap-2">
-// // //                     <Crown className="h-4 w-4 text-yellow-600" />
-// // //                     Head of Department
-// // //                   </CardTitle>
-// // //                 </CardHeader>
-// // //                 <CardContent className="pt-0">
-// // //                   <StudentProfileTile student={hodStudent} className="border-yellow-300" />
-// // //                 </CardContent>
-// // //               </Card>
-// // //             )}
-// // //             {subHodStudent && (
-// // //               <Card className="border-blue-200 bg-blue-50">
-// // //                 <CardHeader className="pb-2">
-// // //                   <CardTitle className="text-sm flex items-center gap-2">
-// // //                     <UserCheck className="h-4 w-4 text-blue-600" />
-// // //                     Sub Head of Department
-// // //                   </CardTitle>
-// // //                 </CardHeader>
-// // //                 <CardContent className="pt-0">
-// // //                   <StudentProfileTile student={subHodStudent} className="border-blue-300" />
-// // //                 </CardContent>
-// // //               </Card>
-// // //             )}
-// // //           </div>
-// // //         </div>
-// // //       )}
-
-// // //       {/* Drop Zone Message */}
-// // //       {isDragOver && (
-// // //         <div className="text-center py-12 mb-6">
-// // //           <div className="text-blue-600 text-lg font-semibold">Drop student here to assign to {department.name}</div>
-// // //         </div>
-// // //       )}
-
-// // //       {/* Department Students */}
-// // //       <div>
-// // //         <h3 className="font-semibold mb-4">Department Students ({departmentStudents.length})</h3>
-// // //         {departmentStudents.length > 0 ? (
-// // //           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-// // //             {departmentStudents.map((student) => (
-// // //               <StudentProfileTile
-// // //                 key={student._id}
-// // //                 student={student}
-// // //                 className={`${student._id === department.HOD ? "border-yellow-300 bg-yellow-50" : ""} ${
-// // //                   student._id === department.subHOD ? "border-blue-300 bg-blue-50" : ""
-// // //                 }`}
-// // //               />
-// // //             ))}
-// // //           </div>
-// // //         ) : (
-// // //           <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-// // //             <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-// // //             <p className="text-muted-foreground">No students assigned to this department</p>
-// // //             <p className="text-sm text-muted-foreground mt-1">Drag students from the left panel to assign them</p>
-// // //           </div>
-// // //         )}
-// // //       </div>
-// // //     </div>
-// // //   )
-// // // }

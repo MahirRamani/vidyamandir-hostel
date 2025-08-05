@@ -1,6 +1,6 @@
 import type { Document, Schema } from "mongoose"
 
-export interface IDepartment extends Document {
+export interface IDepartment {
   _id: string
   name: string
   HOD?: Schema.Types.ObjectId | string
@@ -17,28 +17,28 @@ export interface DepartmentFormData {
   description: string
 }
 
-export interface PopulatedDepartment extends Omit<IDepartment, "HOD" | "subHOD"> {
-  HOD?: {
-    _id: string
-    name: {
-      firstName: string
-      middleName: string
-      lastName: string
-    }
-    studentId: string
-    profileImageUrl: string
-  }
-  subHOD?: {
-    _id: string
-    name: {
-      firstName: string
-      middleName: string
-      lastName: string
-    }
-    studentId: string
-    profileImageUrl: string
-  }
-}
+// export interface PopulatedDepartment extends Omit<IDepartment, "HOD" | "subHOD"> {
+//   HOD?: {
+//     _id: string
+//     name: {
+//       firstName: string
+//       middleName: string
+//       lastName: string
+//     }
+//     studentId: string
+//     profileImageUrl: string
+//   }
+//   subHOD?: {
+//     _id: string
+//     name: {
+//       firstName: string
+//       middleName: string
+//       lastName: string
+//     }
+//     studentId: string
+//     profileImageUrl: string
+//   }
+// }
 
 
 // import type { Document, Schema } from "mongoose"
