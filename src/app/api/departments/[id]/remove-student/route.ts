@@ -6,9 +6,10 @@ import { Student } from "@/models/Student"
 import { withErrorHandling } from "@/lib/middleware/validation"
 import mongoose from "mongoose"
 
-export const POST = withErrorHandling(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const POST = withErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     await connectDB()
 
+    const id = params
     const body = await req.json()
     const { studentId } = body
 
@@ -28,7 +29,7 @@ export const POST = withErrorHandling(async (req: NextRequest, { params }: { par
     try {
         await session.withTransaction(async () => {
             // Check if the department exists
-            const department = await Department.findById(params.id).session(session)
+            const department = await Department.findById(id).session(session)
             if (!department) {
                 throw new Error("Department not found")
             }
@@ -36,7 +37,7 @@ export const POST = withErrorHandling(async (req: NextRequest, { params }: { par
             // Check if the student exists and is in this department
             const student = await Student.findOne({
                 _id: studentId,
-                departmentId: params.id,
+                departmentId: id,
             }).session(session)
 
             if (!student) {
@@ -65,7 +66,7 @@ export const POST = withErrorHandling(async (req: NextRequest, { params }: { par
         })
 
         // Fetch the updated department with populated fields
-        const updatedDepartment = await Department.findById(params.id)
+        const updatedDepartment = await Department.findById(id)
             .populate("HOD", "name studentId")
             .populate("subHOD", "name studentId")
 
