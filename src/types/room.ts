@@ -18,13 +18,13 @@ export interface RoomFormData {
 export interface RoomWithStudents extends IRoom {
   students: Array<{
     _id: string
+    enquiryId: string
     name: {
       firstName: string
       middleName: string
       lastName: string
     }
     studentId: string
-    profileImageUrl: string
     bedNo?: number
   }>
   occupiedBeds: number

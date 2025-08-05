@@ -6,7 +6,6 @@ export const basicInfoSchema = z.object({
     middleName: z.string().min(1, "Middle name is required"),
     lastName: z.string().min(2, "Last name is required"),
   }),
-  profileImageUrl: z.string({ message: "Profile image URL is required" }),
   dateOfBirth: z.date({
     message: "Date of birth is required and must be a valid date",
   }),

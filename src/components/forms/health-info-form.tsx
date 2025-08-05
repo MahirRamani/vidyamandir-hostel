@@ -79,7 +79,7 @@ export function HealthInfoForm({ initialData, onNext, onPrevious, isSubmitting, 
               <FormField
                 key={`illness-${index}`}
                 control={form.control}
-                name={`illnesses.${index}` as any}
+                name={`illnesses.${index}`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Illness {index + 1}</FormLabel>
@@ -102,7 +102,7 @@ export function HealthInfoForm({ initialData, onNext, onPrevious, isSubmitting, 
               <FormField
                 key={`allergy-${index}`}
                 control={form.control}
-                name={`allergies.${index}` as any}
+                name={`allergies.${index}`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Allergy {index + 1}</FormLabel>

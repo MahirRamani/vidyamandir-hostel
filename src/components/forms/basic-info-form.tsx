@@ -34,7 +34,6 @@ export function BasicInfoForm({ initialData, onNext, onPrevious, isSubmitting, i
         middleName: initialData?.name?.middleName || "",
         lastName: initialData?.name?.lastName || "",
       },
-      profileImageUrl: initialData?.profileImageUrl || "",
       dateOfBirth: initialData?.dateOfBirth || undefined,
       studentId: initialData?.studentId || "",
       isPermanentId: initialData?.isPermanentId || false,
@@ -107,7 +106,7 @@ export function BasicInfoForm({ initialData, onNext, onPrevious, isSubmitting, i
         </div>
 
         {/* Profile Image and Basic Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="profileImageUrl"
@@ -153,7 +152,7 @@ export function BasicInfoForm({ initialData, onNext, onPrevious, isSubmitting, i
               </FormItem>
             )}
           />
-        </div>
+        </div> */}
 
         {/* Student ID and Status */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

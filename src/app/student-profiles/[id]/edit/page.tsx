@@ -131,7 +131,6 @@ export default function EditStudentPage() {
   const initialFormData = {
     basicInfo: {
       name: student.name,
-      profileImageUrl: student.profileImageUrl,
       dateOfBirth: new Date(student.dateOfBirth),
       studentId: student.studentId,
       isPermanentId: student.isPermanentId,

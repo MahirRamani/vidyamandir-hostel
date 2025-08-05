@@ -24,7 +24,6 @@ const addressSchema = new Schema(
 const studentSchema = new Schema<IStudent>(
   {
     name: { type: nameSchema, },
-    profileImageUrl: { type: String, },
     dateOfBirth: { type: Date, },
     hobbies: [{ type: String }],
     skills: [{ type: String }],

@@ -169,7 +169,7 @@ export default function DepartmentsPage() {
 
   const handleStudentRemove = async (student: IStudent, department: IDepartment) => {
     try {
-      const response = await apiClient.assignStudentToRoom(student._id, department._id)
+      const response = await apiClient.removeStudentFromDepartment(department._id, student._id)
 
       if (response.success) {
         updateStudentDepartment(student._id, null)
@@ -228,7 +228,7 @@ export default function DepartmentsPage() {
         <div className="flex-1 bg-gray-50">
           {departments.length > 0 ? (
             <Tabs defaultValue={departments[0]._id} className="h-full">
-              <div className="border-b bg-white px-6 py-2">
+              <div className="border-b bg-white px-2 py-1">
                 <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-auto">
                   {departments.map((department) => (
                     <TabsTrigger
@@ -243,7 +243,7 @@ export default function DepartmentsPage() {
               </div>
 
               {departments.map((department) => (
-                <TabsContent key={department._id} value={department._id} className="h-full mt-0">
+                <TabsContent key={department._id} value={department._id} className="h-full">
                   {/* <DepartmentTab
                     department={department}
                     onEdit={setEditingDepartment}

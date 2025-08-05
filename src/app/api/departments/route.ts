@@ -12,8 +12,8 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
   await connectDB()
 
   const departments = await Department.find({})
-    .populate("HOD", "name studentId profileImageUrl")
-    .populate("subHOD", "name studentId profileImageUrl")
+    .populate("HOD", "name studentId")
+    .populate("subHOD", "name studentId")
     .sort({ createdAt: -1 })
     .lean()
 
@@ -51,8 +51,8 @@ export const POST = withValidation(departmentSchema)(
     await department.save()
 
     // Populate the created department before returning
-    await department.populate("HOD", "name studentId profileImageUrl")
-    await department.populate("subHOD", "name studentId profileImageUrl")
+    await department.populate("HOD", "name studentId")
+    await department.populate("subHOD", "name studentId")
 
     return NextResponse.json(
       {

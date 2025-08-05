@@ -9,8 +9,8 @@ export const GET = withErrorHandling(async (req: NextRequest, { params }: { para
   await connectDB()
 
   const department = await Department.findById(params.id)
-    .populate("HOD", "name studentId profileImageUrl")
-    .populate("subHOD", "name studentId profileImageUrl")
+    .populate("HOD", "name studentId")
+    .populate("subHOD", "name studentId")
 
   if (!department) {
     return NextResponse.json(
@@ -88,8 +88,8 @@ export const PUT = withErrorHandling(async (req: NextRequest, { params }: { para
     new: true,
     runValidators: true,
   })
-    .populate("HOD", "name studentId profileImageUrl")
-    .populate("subHOD", "name studentId profileImageUrl")
+    .populate("HOD", "name studentId")
+    .populate("subHOD", "name studentId")
 
   if (!department) {
     return NextResponse.json(

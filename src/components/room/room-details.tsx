@@ -78,7 +78,7 @@ export function RoomDetails({ room, onStudentRemove }: RoomDetailsProps) {
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={student.profileImageUrl || "/placeholder.svg"} alt={fullName} />
+                        <AvatarImage src={`https://res.cloudinary.com/dap7sy5lk/image/upload/svm-hostel-students/${student.enquiryId}.jpg` || "/placeholder.svg"} alt={fullName} />
                         <AvatarFallback className="text-sm">{initials}</AvatarFallback>
                       </Avatar>
                       <div>

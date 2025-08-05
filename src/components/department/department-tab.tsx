@@ -118,7 +118,7 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
   return (
     <div
       className={cn(
-        "h-full p-6 transition-all duration-300 min-h-[600px] relative",
+        "h-full p-3 transition-all duration-300 min-h-[600px] relative",
         isDragOver && dropZoneActive && "bg-gradient-to-br from-blue-50/70 to-purple-50/70"
       )}
       onDragEnter={handleDragEnter}
@@ -167,11 +167,11 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
 
       {/* Department Header */}
       <div className={cn(
-        "flex items-center justify-between mb-6 transition-opacity duration-300",
+        "flex items-center justify-between mb-3 transition-opacity duration-300",
         isDragOver && dropZoneActive && "opacity-60"
       )}>
         <div>
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-0">
             <h2 className="text-2xl font-bold text-gray-800">{department.name}</h2>
             <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
               <Users className="h-3 w-3" />

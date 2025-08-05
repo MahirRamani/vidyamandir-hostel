@@ -7,7 +7,6 @@ export interface IStudent {
     middleName: string
     lastName: string
   }
-  profileImageUrl: string
   dateOfBirth: Date
   hobbies: string[]
   skills: string[]
@@ -66,7 +65,6 @@ export interface StudentFormData {
       middleName: string
       lastName: string
     }
-    profileImageUrl: string
     dateOfBirth: Date
     studentId: string
     isPermanentId: boolean

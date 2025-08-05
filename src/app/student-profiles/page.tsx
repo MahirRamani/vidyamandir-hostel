@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { Search, Filter, Plus } from "lucide-react"
+import { Search, Filter, Plus, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -172,7 +172,7 @@ export default function StudentProfilesPage() {
         </Button>
       }
     >
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto p-2 space-y-2">
         {/* Search and Filter Controls */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -226,8 +226,9 @@ export default function StudentProfilesPage() {
                   size="sm"
                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => handleDeleteClick(student, e)}
+                  title="Delete Student"
                 >
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             ))}

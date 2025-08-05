@@ -150,7 +150,7 @@ export default function StudentDetailPage() {
           <CardHeader>
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={student.profileImageUrl || "/placeholder.svg"} alt={fullName} />
+                <AvatarImage src={`https://res.cloudinary.com/dap7sy5lk/image/upload/svm-hostel-students/${student.enquiryId}.jpg` || "/placeholder.svg"} alt={fullName} />
                 <AvatarFallback className="text-lg font-medium">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1">

@@ -30,7 +30,6 @@ interface CreateStudentData {
     middleName: string
     lastName: string
   }
-  profileImageUrl: string
   dateOfBirth: Date
   hobbies: string[]
   skills: string[]
@@ -79,6 +78,11 @@ interface StudentRoomRemovalData {
 
 interface StudentDepartmentAssignmentData {
   departmentId: string | null
+}
+
+// Type definition for the request body
+interface StudentDepartmentRemovalData {
+  studentId: string
 }
 
 class ApiClient {
@@ -255,12 +259,19 @@ class ApiClient {
     })
   }
 
-  async removeStudentFromRoom(roomId: string, studentId: string): Promise<ApiResponse<IRoom>> {
-    return this.request<IRoom>(`/rooms/${roomId}/remove-student`, {
+  async removeStudentFromDepartment(departmentId: string, studentId: string): Promise<ApiResponse<IDepartment>> {
+    return this.request<IDepartment>(`/departments/${departmentId}/remove-student`, {
       method: "POST",
-      body: JSON.stringify({ studentId } as StudentRoomRemovalData),
+      body: JSON.stringify({ studentId } as StudentDepartmentRemovalData),
     })
   }
+
+  // async removeStudentFromRoom(roomId: string, studentId: string): Promise<ApiResponse<IRoom>> {
+  //   return this.request<IRoom>(`/rooms/${roomId}/remove-student`, {
+  //     method: "POST",
+  //     body: JSON.stringify({ studentId } as StudentRoomRemovalData),
+  //   })
+  // }
 }
 
 export const apiClient = new ApiClient()

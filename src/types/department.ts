@@ -26,7 +26,6 @@ export interface DepartmentFormData {
 //       lastName: string
 //     }
 //     studentId: string
-//     profileImageUrl: string
 //   }
 //   subHOD?: {
 //     _id: string
@@ -36,7 +35,6 @@ export interface DepartmentFormData {
 //       lastName: string
 //     }
 //     studentId: string
-//     profileImageUrl: string
 //   }
 // }
 

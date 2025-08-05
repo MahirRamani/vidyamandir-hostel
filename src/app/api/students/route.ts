@@ -29,7 +29,6 @@ interface StudentQuery extends FilterQuery<IStudent> {
 const flattenStudentData = (data: CompleteStudentData): Partial<IStudent> => ({
   // Basic Info
   name: data.basicInfo.name,
-  profileImageUrl: data.basicInfo.profileImageUrl,
   dateOfBirth: data.basicInfo.dateOfBirth,
   studentId: data.basicInfo.studentId,
   isPermanentId: data.basicInfo.isPermanentId,
