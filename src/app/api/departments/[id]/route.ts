@@ -5,10 +5,12 @@ import { Student } from "@/models/Student"
 import { withErrorHandling } from "@/lib/middleware/validation"
 import mongoose from "mongoose"
 
-export const GET = withErrorHandling(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const GET = withErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   await connectDB()
 
-  const department = await Department.findById(params.id)
+  const { id } = await params
+
+  const department = await Department.findById(id)
     .populate("HOD", "name studentId")
     .populate("subHOD", "name studentId")
 
@@ -28,8 +30,10 @@ export const GET = withErrorHandling(async (req: NextRequest, { params }: { para
   })
 })
 
-export const PUT = withErrorHandling(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const PUT = withErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   await connectDB()
+
+  const { id } = await params
 
   const body = await req.json()
 
@@ -37,7 +41,7 @@ export const PUT = withErrorHandling(async (req: NextRequest, { params }: { para
   if (body.HOD && body.HOD !== "none") {
     const hodExists = await Student.findOne({
       _id: body.HOD,
-      departmentId: params.id,
+      departmentId: id,
     })
     if (!hodExists) {
       return NextResponse.json(
@@ -53,7 +57,7 @@ export const PUT = withErrorHandling(async (req: NextRequest, { params }: { para
   if (body.subHOD && body.subHOD !== "none") {
     const subHodExists = await Student.findOne({
       _id: body.subHOD,
-      departmentId: params.id,
+      departmentId: id,
     })
     if (!subHodExists) {
       return NextResponse.json(
@@ -84,7 +88,7 @@ export const PUT = withErrorHandling(async (req: NextRequest, { params }: { para
     subHOD: body.subHOD && body.subHOD !== "none" ? new mongoose.Types.ObjectId(body.subHOD) : null,
   }
 
-  const department = await Department.findByIdAndUpdate(params.id, updateData, {
+  const department = await Department.findByIdAndUpdate(id, updateData, {
     new: true,
     runValidators: true,
   })
@@ -108,8 +112,10 @@ export const PUT = withErrorHandling(async (req: NextRequest, { params }: { para
   })
 })
 
-export const DELETE = withErrorHandling(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const DELETE = withErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   await connectDB()
+
+  const { id } = await params
 
   // Start a transaction to ensure data consistency
   const session = await mongoose.startSession()
@@ -117,10 +123,10 @@ export const DELETE = withErrorHandling(async (req: NextRequest, { params }: { p
   try {
     await session.withTransaction(async () => {
       // First, release all students from this department
-      await Student.updateMany({ departmentId: params.id }, { $unset: { departmentId: 1 } }, { session })
+      await Student.updateMany({ departmentId: id }, { $unset: { departmentId: 1 } }, { session })
 
       // Then delete the department
-      const department = await Department.findByIdAndDelete(params.id, { session })
+      const department = await Department.findByIdAndDelete(id, { session })
 
       if (!department) {
         throw new Error("Department not found")

@@ -54,7 +54,7 @@ export default function DepartmentsPage() {
     try {
       const [departmentsResponse, studentsResponse] = await Promise.all([
         apiClient.getDepartments(),
-        apiClient.getStudents({ limit: 1000 }),
+        apiClient.getStudents({ limit: 10000 }),
       ])
 
       if (departmentsResponse.success) {

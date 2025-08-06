@@ -9,7 +9,7 @@ import mongoose from "mongoose"
 export const POST = withErrorHandling(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     await connectDB()
 
-    const id = params
+    const { id } = await params
     const body = await req.json()
     const { studentId } = body
 

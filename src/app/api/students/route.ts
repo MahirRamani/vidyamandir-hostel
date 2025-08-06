@@ -78,7 +78,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
   const search = searchParams.get("search") || ""
   const status = searchParams.get("status") || ""
   const page = Math.max(1, Number.parseInt(searchParams.get("page") || "1"))
-  const limit = Math.min(100, Math.max(1, Number.parseInt(searchParams.get("limit") || "10")))
+  const limit = Math.min(300, Math.max(1, Number.parseInt(searchParams.get("limit") || "300")))
 
   const skip = (page - 1) * limit
 

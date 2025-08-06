@@ -86,6 +86,7 @@ export function StudentPanel({ onStudentDragStart }: StudentPanelProps) {
 
   return (
     <div className="w-85 border-r bg-white h-full flex flex-col shadow-sm">
+      {students.length}
       {/* Header */}
       <div className="p-2 border-b bg-gradient-to-r from-blue-50 to-purple-50">
         {/* <h3 className="font-semibold text-lg text-gray-800">Students</h3> */}
