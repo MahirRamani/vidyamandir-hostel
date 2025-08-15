@@ -1,5 +1,11 @@
 import MainLayout from '@/components/layout/main-layout'
+import { Metadata } from 'next'
 import React from 'react'
+
+export const metadata: Metadata = {
+  title: 'Birthdays',
+  description: 'View and manage birthday information',
+}
 
 export default function Birthdays() {
     return (

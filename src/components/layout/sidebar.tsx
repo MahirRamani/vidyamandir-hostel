@@ -46,11 +46,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     <div
       className={cn(
         "flex h-screen flex-col border-r bg-white transition-all duration-300",
-        collapsed ? "w-16" : "w-64",
+        collapsed ? "w-16" : "w-54",
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b">
+      <div className="flex h-16 items-center justify-between px-2 pr-3 border-b">
         {!collapsed && <h2 className="text-lg font-semibold">Hostel Management</h2>}
         <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -74,7 +74,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-2">
         <ul className="space-y-2">
           {navigation.map((item) => {
             const isActive = pathname === item.href
