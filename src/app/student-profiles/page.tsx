@@ -61,8 +61,23 @@ export default function StudentProfilesPage() {
         limit: 300,
       })
 
+      // if (response.success && response.data) {
+      //   setStudents(response.data.students)
+      //   setPagination({
+      //     page: response.data.page,
+      //     totalPages: response.data.totalPages,
+      //     total: response.data.total,
+      //   })
+      // }
+
       if (response.success && response.data) {
-        setStudents(response.data.students)
+        const sortedStudents = response.data.students.sort((a, b) => {
+          const standardA = Number(a.standard) || 0;
+          const standardB = Number(b.standard) || 0;
+          return standardA - standardB;
+        });
+
+        setStudents(sortedStudents)
         setPagination({
           page: response.data.page,
           totalPages: response.data.totalPages,
@@ -116,7 +131,7 @@ export default function StudentProfilesPage() {
   // Handle status filter changes
   useEffect(() => {
     setPagination(prev => ({ ...prev, page: 1 }))
-    
+
     if (searchQuery.trim()) {
       handleSearch(searchQuery)
     } else {

@@ -24,7 +24,8 @@ interface DepartmentTabProps {
 }
 
 export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onStudentRemove }: DepartmentTabProps) {
-  const { students } = useDepartmentStore()
+  const { students, departments } = useDepartmentStore()
+  // const { students } = useDepartmentStore()
   const [isDragOver, setIsDragOver] = useState(false)
   const [draggedStudent, setDraggedStudent] = useState<IStudent | null>(null)
   const [dropZoneActive, setDropZoneActive] = useState(false)
@@ -44,7 +45,10 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
   }
 
   // Filter students assigned to this department
-  const departmentStudents = students.filter((student) => student.departmentId?.toString() === department._id)
+  // const departmentStudents = students.filter((student) => student.departmentId?.toString() === department._id)
+  const departmentStudents = students
+    .filter((student) => student.departmentId?.toString() === department._id)
+    .sort((a, b) => b.standard - a.standard);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault()
@@ -158,6 +162,7 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
             <div className="scale-90 opacity-90">
               <StudentProfileTile
                 student={draggedStudent}
+                departments={departments}
                 className="border-blue-300 bg-blue-50 shadow-lg"
               />
             </div>
@@ -214,10 +219,11 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
                 {departmentStudents.map((student) => (
                   <div
                     key={student._id}
-                    className="transform hover:scale-105 transition-transform duration-200 relative group"
+                    className="transform hover:scale-102 transition-transform duration-200 relative group"
                   >
                     <StudentProfileTile
                       student={student}
+                      departments={departments}
                       className="border-green-200 bg-green-50 shadow-sm hover:shadow-md transition-shadow duration-200"
                     />
 
