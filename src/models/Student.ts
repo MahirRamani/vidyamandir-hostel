@@ -35,6 +35,7 @@ const studentSchema = new Schema<IStudent>(
     roomId: { type: Schema.Types.ObjectId, ref: "Room" },
     bedNo: { type: Number },
     departmentId: { type: Schema.Types.ObjectId, ref: "Department" },
+    departmentIds: [{ type: Schema.Types.ObjectId, ref: "Department" }],
     admissionYear: { type: String, },
     schoolRollNo: { type: Number, },
     standard: { type: Number, },

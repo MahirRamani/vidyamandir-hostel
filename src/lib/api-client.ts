@@ -77,7 +77,8 @@ interface StudentRoomRemovalData {
 }
 
 interface StudentDepartmentAssignmentData {
-  departmentId: string | null
+  departmentIds: string[] | null // Changed to support multiple departments
+
 }
 
 // Type definition for the request body
@@ -186,11 +187,40 @@ class ApiClient {
     })
   }
 
-  async assignStudentToDepartment(studentId: string, departmentId: string | null): Promise<ApiResponse<IStudent>> {
-    return this.request<IStudent>(`/students/${studentId}/department`, {
+  // async assignStudentToDepartment(studentId: string, departmentId: string | null): Promise<ApiResponse<IStudent>> {
+  //   return this.request<IStudent>(`/students/${studentId}/department`, {
+  //     method: "PUT",
+  //     body: JSON.stringify({ departmentId } as StudentDepartmentAssignmentData),
+  //   })
+  // }
+
+  // Add these methods to your API client
+
+  // Updated method for multiple departments
+  async assignStudentToDepartments(studentId: string, departmentIds: string[]): Promise<ApiResponse<IStudent>> {
+    return this.request<IStudent>(`/students/${studentId}/departments`, {
       method: "PUT",
-      body: JSON.stringify({ departmentId } as StudentDepartmentAssignmentData),
+      body: JSON.stringify({ departmentIds }),
     })
+  }
+
+  // Method to add student to additional department
+  async addStudentToDepartment(studentId: string, departmentId: string): Promise<ApiResponse<IStudent>> {
+    return this.request<IStudent>(`/students/${studentId}/departments/${departmentId}`, {
+      method: "POST",
+    })
+  }
+
+  // Method to remove student from specific department
+  async removeStudentFromSpecificDepartment(studentId: string, departmentId: string): Promise<ApiResponse<IStudent>> {
+    return this.request<IStudent>(`/students/${studentId}/departments/${departmentId}`, {
+      method: "DELETE",
+    })
+  }
+
+  // Keep backward compatibility
+  async assignStudentToDepartment(studentId: string, departmentId: string | null): Promise<ApiResponse<IStudent>> {
+    return this.assignStudentToDepartments(studentId, departmentId ? [departmentId] : [])
   }
 
   // Building API methods

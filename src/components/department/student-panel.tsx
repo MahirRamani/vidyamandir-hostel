@@ -20,6 +20,47 @@ export function StudentPanel({ onStudentDragStart }: StudentPanelProps) {
 
   const [draggedStudentId, setDraggedStudentId] = useState<string | null>(null)
 
+  // const filteredStudents = students.filter((student) => {
+  //   const matchesSearch =
+  //     !searchQuery ||
+  //     student.name.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     student.name.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     student.studentId.toLowerCase().includes(searchQuery.toLowerCase())
+
+  //   const matchesFilter =
+  //     assignmentFilter === "all" ||
+  //     (assignmentFilter === "assigned" && student.departmentId) ||
+  //     (assignmentFilter === "unassigned" && !student.departmentId)
+
+  //   return matchesSearch && matchesFilter
+  // })
+
+  // // Calculate counts for different filters
+  // const totalCount = students.length
+  // const assignedCount = students.filter(student => student.departmentId).length
+  // const unassignedCount = students.filter(student => !student.departmentId).length
+
+  // // Updated filteredStudents logic in StudentPanel component
+
+  // const filteredStudents = students.filter((student) => {
+  //   const matchesSearch =
+  //     !searchQuery ||
+  //     student.name.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     student.name.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     student.studentId.toLowerCase().includes(searchQuery.toLowerCase())
+
+  //   // Updated filter logic for multiple departments
+  //   const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+
+  //   const matchesFilter =
+  //     assignmentFilter === "all" ||
+  //     (assignmentFilter === "assigned" && hasAssignedDepartments) ||
+  //     (assignmentFilter === "unassigned" && !hasAssignedDepartments)
+
+  //   return matchesSearch && matchesFilter
+  // })
+
+  // Updated filtering for StudentPanel component
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       !searchQuery ||
@@ -27,18 +68,34 @@ export function StudentPanel({ onStudentDragStart }: StudentPanelProps) {
       student.name.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.studentId.toLowerCase().includes(searchQuery.toLowerCase())
 
+    // FIXED: Updated filter logic for multiple departments
+    const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+    
     const matchesFilter =
       assignmentFilter === "all" ||
-      (assignmentFilter === "assigned" && student.departmentId) ||
-      (assignmentFilter === "unassigned" && !student.departmentId)
+      (assignmentFilter === "assigned" && hasAssignedDepartments) ||
+      (assignmentFilter === "unassigned" && !hasAssignedDepartments)
 
     return matchesSearch && matchesFilter
   })
 
-  // Calculate counts for different filters
+  // // Updated counts calculation
+  // const totalCount = students.length
+  // const assignedCount = students.filter(student =>
+  //   (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+  // ).length
+  // const unassignedCount = students.filter(student =>
+  //   (!student.departmentIds || student.departmentIds.length === 0) && !student.departmentId
+  // ).length
+
+  // Updated counts calculation
   const totalCount = students.length
-  const assignedCount = students.filter(student => student.departmentId).length
-  const unassignedCount = students.filter(student => !student.departmentId).length
+  const assignedCount = students.filter(student => 
+    (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+  ).length
+  const unassignedCount = students.filter(student => 
+    (!student.departmentIds || student.departmentIds.length === 0) && !student.departmentId
+  ).length
 
   // Get current filter count
   const getCurrentFilterCount = () => {
@@ -68,35 +125,96 @@ export function StudentPanel({ onStudentDragStart }: StudentPanelProps) {
     setSearchQuery("")
   }
 
-  const handleDragStart = (student: IStudent, e: React.DragEvent) => {
-    // Only allow dragging unassigned students
-    if (student.departmentId) {
-      e.preventDefault()
-      return
-    }
+  // const handleDragStart = (student: IStudent, e: React.DragEvent) => {
+  //   // // Only allow dragging unassigned students
+  //   // if (student.departmentId) {
+  //   //   e.preventDefault()
+  //   //   return
+  //   // }
 
+  //   // const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+
+  //   // // You can modify this logic based on your requirements:
+  //   // // Option 1: Only allow dragging unassigned students
+  //   // if (hasAssignedDepartments) {
+  //   //   e.preventDefault()
+  //   //   return
+  //   // }
+
+  //   // Option 2: Allow dragging all students (to add to additional departments)
+  //   // Remove the above if block to allow this behavior
+
+  //   e.dataTransfer.setData("application/json", JSON.stringify(student))
+  //   e.dataTransfer.effectAllowed = "move"
+
+  //   // Create enhanced drag preview
+  //   const dragElement = document.createElement('div')
+  //   dragElement.className = 'pointer-events-none'
+  //   dragElement.innerHTML = `
+  //     <div class="transform rotate-3 scale-110 opacity-95 bg-white rounded-lg border-2 border-blue-500 shadow-2xl p-4 max-w-xs">
+  //       <div class="flex items-center space-x-3 mb-2">
+  //         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+  //           ${student.name.firstName[0]}${student.name.lastName[0]}
+  //         </div>
+  //         <div>
+  //           <div class="font-semibold text-sm text-gray-800">${student.name.firstName} ${student.name.lastName}</div>
+  //           <div class="text-xs text-gray-500">${student.studentId}</div>
+  //         </div>
+  //       </div>
+  //       <div class="text-xs text-blue-600 font-medium text-center bg-blue-50 rounded px-2 py-1">
+  //         Drag to assign to department
+  //       </div>
+  //     </div>
+  //   `
+
+  //   dragElement.style.position = 'absolute'
+  //   dragElement.style.top = '-1000px'
+  //   dragElement.style.left = '-1000px'
+  //   document.body.appendChild(dragElement)
+
+  //   e.dataTransfer.setDragImage(dragElement, 150, 75)
+
+  //   setTimeout(() => {
+  //     document.body.removeChild(dragElement)
+  //   }, 0)
+
+  //   setDraggedStudentId(student._id)
+  //   onStudentDragStart(student)
+  // }
+
+  const handleDragStart = (student: IStudent, e: React.DragEvent) => {
+    // REMOVED: Only allow dragging unassigned students
+    // const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+    // if (hasAssignedDepartments) {
+    //   e.preventDefault()
+    //   return
+    // }
+
+    // NOW: Allow dragging all students (both assigned and unassigned)
     e.dataTransfer.setData("application/json", JSON.stringify(student))
     e.dataTransfer.effectAllowed = "move"
+
+    const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
 
     // Create enhanced drag preview
     const dragElement = document.createElement('div')
     dragElement.className = 'pointer-events-none'
     dragElement.innerHTML = `
-      <div class="transform rotate-3 scale-110 opacity-95 bg-white rounded-lg border-2 border-blue-500 shadow-2xl p-4 max-w-xs">
-        <div class="flex items-center space-x-3 mb-2">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-            ${student.name.firstName[0]}${student.name.lastName[0]}
-          </div>
-          <div>
-            <div class="font-semibold text-sm text-gray-800">${student.name.firstName} ${student.name.lastName}</div>
-            <div class="text-xs text-gray-500">${student.studentId}</div>
-          </div>
+    <div class="transform rotate-3 scale-110 opacity-95 bg-white rounded-lg border-2 border-blue-500 shadow-2xl p-4 max-w-xs">
+      <div class="flex items-center space-x-3 mb-2">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+          ${student.name.firstName[0]}${student.name.lastName[0]}
         </div>
-        <div class="text-xs text-blue-600 font-medium text-center bg-blue-50 rounded px-2 py-1">
-          Drag to assign to department
+        <div>
+          <div class="font-semibold text-sm text-gray-800">${student.name.firstName} ${student.name.lastName}</div>
+          <div class="text-xs text-gray-500">${student.studentId}</div>
         </div>
       </div>
-    `
+      <div class="text-xs text-blue-600 font-medium text-center bg-blue-50 rounded px-2 py-1">
+        ${hasAssignedDepartments ? 'Add to additional department' : 'Assign to department'}
+      </div>
+    </div>
+  `
 
     dragElement.style.position = 'absolute'
     dragElement.style.top = '-1000px'
@@ -177,7 +295,8 @@ export function StudentPanel({ onStudentDragStart }: StudentPanelProps) {
         ) : filteredStudents.length > 0 ? (
           filteredStudents.map((student) => {
             const isDragging = draggedStudentId === student._id
-            const canDrag = !student.departmentId
+            // const canDrag = !student.departmentId
+            const canDrag = true
             const isAssigned = !!student.departmentId
 
             return (

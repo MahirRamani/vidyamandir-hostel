@@ -18,6 +18,7 @@ export interface IStudent {
   roomId: string | null
   bedNo: number
   departmentId: string | null
+  departmentIds: string[] // for multiple departments
   admissionYear: string
   schoolRollNo: number
   standard: number

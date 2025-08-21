@@ -32,6 +32,8 @@ export default function DepartmentsPage() {
     updateDepartment,
     removeDepartment,
     updateStudentDepartment,
+    updateStudentDepartments,
+    removeStudentFromDepartment,
   } = useDepartmentStore()
 
   const [showDepartmentForm, setShowDepartmentForm] = useState(false)
@@ -79,21 +81,61 @@ export default function DepartmentsPage() {
     // Visual feedback handled in StudentPanel
   }
 
-  const handleStudentDrop = async (student: IStudent, department: IDepartment) => {
-    try {
-      const response = await apiClient.assignStudentToDepartment(student._id, department._id)
+  // const handleStudentDrop = async (student: IStudent, department: IDepartment) => {
+  //   try {
+  //     const response = await apiClient.assignStudentToDepartment(student._id, department._id)
 
+  //     if (response.success) {
+  //       updateStudentDepartment(student._id, department._id)
+  //       toast.success(`${student.name.firstName} assigned to ${department.name}`)
+  //     } else {
+  //       toast.error(response.error || "Failed to assign student")
+  //     }
+  //   } catch (error) {
+  //     toast.error(error instanceof Error ? error.message : "Failed to assign student")
+  //   }
+  // }
+
+  // Updated handleStudentDrop function
+const handleStudentDrop = async (student: IStudent, department: IDepartment) => {
+  try {
+    const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+    
+    // Check if student is already assigned to this department
+    const currentDepartmentIds = student.departmentIds || (student.departmentId ? [student.departmentId] : [])
+    if (currentDepartmentIds.includes(department._id)) {
+      toast.error("Student is already assigned to this department")
+      return
+    }
+
+    // For unassigned students, use the existing assignment method
+    if (!hasAssignedDepartments) {
+      const response = await apiClient.assignStudentToDepartment(student._id, department._id)
+      
       if (response.success) {
         updateStudentDepartment(student._id, department._id)
         toast.success(`${student.name.firstName} assigned to ${department.name}`)
       } else {
         toast.error(response.error || "Failed to assign student")
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to assign student")
+    } else {
+      // For students with existing departments, add to additional department
+      const response = await apiClient.addStudentToDepartment(student._id, department._id)
+      
+      if (response.success) {
+        // Update the store with new department assignments
+        const updatedDepartmentIds = [...currentDepartmentIds, department._id]
+        updateStudentDepartments(student._id, updatedDepartmentIds)
+        toast.success(`${student.name.firstName} added to ${department.name}`)
+      } else {
+        toast.error(response.error || "Failed to add student to department")
+      }
     }
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Failed to assign student")
   }
-
+  }
+  
   const handleCreateDepartment = async (data: DepartmentFormData) => {
     try {
       const response = await apiClient.createDepartment(data)
@@ -138,44 +180,117 @@ export default function DepartmentsPage() {
     }
   }
 
-  const handleDeleteDepartment = async () => {
-    if (!deleteDialog.department) return
+  // const handleDeleteDepartment = async () => {
+  //   if (!deleteDialog.department) return
 
-    try {
-      const response = await apiClient.deleteDepartment(deleteDialog.department._id)
+  //   try {
+  //     const response = await apiClient.deleteDepartment(deleteDialog.department._id)
 
-      if (response.success) {
-        // Remove department and update students
-        removeDepartment(deleteDialog.department._id)
+  //     if (response.success) {
+  //       // Remove department and update students
+  //       removeDepartment(deleteDialog.department._id)
 
-        // Update students to remove department assignment
-        const departmentStudents = students.filter((s) => s.departmentId?.toString() === deleteDialog.department!._id?.toString())
-        departmentStudents.forEach((student) => {
-          updateStudentDepartment(student._id, null)
-        })
+  //       // Update students to remove department assignment
+  //       const departmentStudents = students.filter((s) => s.departmentId?.toString() === deleteDialog.department!._id?.toString())
+  //       departmentStudents.forEach((student) => {
+  //         updateStudentDepartment(student._id, null)
+  //       })
 
-        setSuccessDialog({
-          open: true,
-          title: "Department Deleted",
-          description: "The department has been successfully deleted and all students have been released.",
-        })
-        toast.success("Department deleted successfully")
-      } else {
-        toast.error(response.error || "Failed to delete department")
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete department")
-    } finally {
-      setDeleteDialog({ open: false, department: null })
+  //       setSuccessDialog({
+  //         open: true,
+  //         title: "Department Deleted",
+  //         description: "The department has been successfully deleted and all students have been released.",
+  //       })
+  //       toast.success("Department deleted successfully")
+  //     } else {
+  //       toast.error(response.error || "Failed to delete department")
+  //     }
+  //   } catch (error) {
+  //     toast.error(error instanceof Error ? error.message : "Failed to delete department")
+  //   } finally {
+  //     setDeleteDialog({ open: false, department: null })
+  //   }
+  // }
+
+  // Updated handleDeleteDepartment function
+const handleDeleteDepartment = async () => {
+  if (!deleteDialog.department) return
+
+  try {
+    const response = await apiClient.deleteDepartment(deleteDialog.department._id)
+
+    if (response.success) {
+      // Remove department and update students
+      removeDepartment(deleteDialog.department._id)
+
+      // Update students to remove this department from their assignments
+      const departmentStudents = students.filter((s) => {
+        const studentDepartmentIds = s.departmentIds || (s.departmentId ? [s.departmentId] : [])
+        return studentDepartmentIds.includes(deleteDialog.department!._id)
+      })
+      
+      departmentStudents.forEach((student) => {
+        const currentDepartmentIds = student.departmentIds || (student.departmentId ? [student.departmentId] : [])
+        const updatedDepartmentIds = currentDepartmentIds.filter(id => id !== deleteDialog.department!._id)
+        updateStudentDepartments(student._id, updatedDepartmentIds)
+      })
+
+      setSuccessDialog({
+        open: true,
+        title: "Department Deleted",
+        description: "The department has been successfully deleted and all students have been updated.",
+      })
+      toast.success("Department deleted successfully")
+    } else {
+      toast.error(response.error || "Failed to delete department")
     }
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Failed to delete department")
+  } finally {
+    setDeleteDialog({ open: false, department: null })
   }
+  }
+  
+  // const handleStudentRemove = async (student: IStudent, department: IDepartment) => {
+  //   try {
+  //     const response = await apiClient.removeStudentFromDepartment(department._id, student._id)
 
+  //     if (response.success) {
+  //       updateStudentDepartment(student._id, null)
+  //       toast.success(`${student.name.firstName} removed from ${department.name}`)
+  //     } else {
+  //       toast.error(response.error || "Failed to remove student")
+  //     }
+  //   } catch (error) {
+  //     toast.error(error instanceof Error ? error.message : "Failed to remove student")
+  //   }
+  // }
+
+  //   // Updated handleStudentRemove function
+  // const handleStudentRemove = async (student: IStudent, department: IDepartment) => {
+  //   try {
+  //     const response = await apiClient.removeStudentFromSpecificDepartment(student._id, department._id)
+
+  //     if (response.success && response.data) {
+  //       // Update store with the updated student data
+  //       updateStudentDepartments(student._id, response.data.departmentIds || [])
+  //       toast.success(`${student.name.firstName} removed from ${department.name}`)
+  //     } else {
+  //       toast.error(response.error || "Failed to remove student")
+  //     }
+  //   } catch (error) {
+  //     toast.error(error instanceof Error ? error.message : "Failed to remove student")
+  //   }
+  //   }
+  
+  // Updated handleStudentRemove function
   const handleStudentRemove = async (student: IStudent, department: IDepartment) => {
     try {
-      const response = await apiClient.removeStudentFromDepartment(department._id, student._id)
+      const response = await apiClient.removeStudentFromSpecificDepartment(student._id, department._id)
 
       if (response.success) {
-        updateStudentDepartment(student._id, null)
+        // Use the store method to update the state correctly
+        removeStudentFromDepartment(student._id, department._id)
         toast.success(`${student.name.firstName} removed from ${department.name}`)
       } else {
         toast.error(response.error || "Failed to remove student")
@@ -184,16 +299,44 @@ export default function DepartmentsPage() {
       toast.error(error instanceof Error ? error.message : "Failed to remove student")
     }
   }
+  
+  // // Calculate student count for each department
+  // const getDepartmentStudentCount = (departmentId: string) => {
+  //   return students.filter((student) => student.departmentId?.toString() === departmentId).length
+  // }
 
-  // Calculate student count for each department
+  // // Get unassigned students count for the toggle button
+  // const unassignedStudentsCount = students.filter((student) => !student.departmentId).length
+  // const unassignedStudents = students.filter((student) => !student.departmentId)
+
+  // // Updated getDepartmentStudentCount function
+  // const getDepartmentStudentCount = (departmentId: string) => {
+  //   return students.filter((student) => {
+  //     const studentDepartmentIds = student.departmentIds || (student.departmentId ? [student.departmentId] : [])
+  //     return studentDepartmentIds.includes(departmentId)
+  //   }).length
+  // }
+
+  // Updated getDepartmentStudentCount function
   const getDepartmentStudentCount = (departmentId: string) => {
-    return students.filter((student) => student.departmentId?.toString() === departmentId).length
+    return students.filter((student) => {
+      const studentDepartmentIds = student.departmentIds || (student.departmentId ? [student.departmentId] : [])
+      return studentDepartmentIds.some(deptId => deptId?.toString() === departmentId?.toString())
+    }).length
   }
+  
+  // Updated unassigned students calculation
+  const unassignedStudentsCount = students.filter((student) => {
+    const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+    return !hasAssignedDepartments
+  }).length
 
-  // Get unassigned students count for the toggle button
-  const unassignedStudentsCount = students.filter((student) => !student.departmentId).length
-  const unassignedStudents = students.filter((student) => !student.departmentId)
+  const unassignedStudents = students.filter((student) => {
+    const hasAssignedDepartments = (student.departmentIds && student.departmentIds.length > 0) || !!student.departmentId
+    return !hasAssignedDepartments
+  })
 
+  
   if (isLoading) {
     return (
       <MainLayout title="Departments" subtitle="Loading departments...">

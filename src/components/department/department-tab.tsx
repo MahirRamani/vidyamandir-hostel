@@ -44,11 +44,30 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
     setRemoveDialog({ open: false, student: null })
   }
 
-  // Filter students assigned to this department
-  // const departmentStudents = students.filter((student) => student.departmentId?.toString() === department._id)
+  // // Filter students assigned to this department
+  // // const departmentStudents = students.filter((student) => student.departmentId?.toString() === department._id)
+  // const departmentStudents = students
+  //   .filter((student) => student.departmentId?.toString() === department._id)
+  //   .sort((a, b) => b.standard - a.standard);
+
+  // Updated filtering logic in DepartmentTab component
+
+  // // Filter students assigned to this department (updated for multiple departments)
+  // const departmentStudents = students
+  //   .filter((student) => {
+  //     // Check both old and new department assignment formats
+  //     const studentDepartmentIds = student.departmentIds || (student.departmentId ? [student.departmentId] : [])
+  //     return studentDepartmentIds.includes(department._id)
+  //   })
+  //   .sort((a, b) => b.standard - a.standard)
+
   const departmentStudents = students
-    .filter((student) => student.departmentId?.toString() === department._id)
-    .sort((a, b) => b.standard - a.standard);
+  .filter((student) => {
+    // Check both old and new department assignment formats
+    const studentDepartmentIds = student.departmentIds || (student.departmentId ? [student.departmentId] : [])
+    return studentDepartmentIds.some(deptId => deptId?.toString() === department._id?.toString())
+  })
+  .sort((a, b) => b.standard - a.standard)
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault()
@@ -87,6 +106,38 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
     e.dataTransfer.dropEffect = "move"
   }
 
+  // const handleDrop = (e: React.DragEvent) => {
+  //   e.preventDefault()
+  //   dragCounterRef.current = 0
+  //   setIsDragOver(false)
+  //   setDropZoneActive(false)
+  //   setDraggedStudent(null)
+
+  //   const studentData = e.dataTransfer.getData("application/json")
+  //   if (studentData) {
+  //     try {
+  //       const student = JSON.parse(studentData)
+
+  //       // Check if student is already assigned to this department
+  //       if (student.departmentId === department._id) {
+  //         toast.error("Student is already assigned to this department")
+  //         return
+  //       }
+
+  //       // Only allow dropping unassigned students
+  //       if (student.departmentId) {
+  //         toast.error("Student is already assigned to another department")
+  //         return
+  //       }
+
+  //       onStudentDrop(student, department)
+  //     } catch (error) {
+  //       console.error("Error parsing dropped student data:", error)
+  //       toast.error("Failed to assign student")
+  //     }
+  //   }
+  // }
+  // Updated handleDrop function
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     dragCounterRef.current = 0
@@ -100,17 +151,13 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
         const student = JSON.parse(studentData)
 
         // Check if student is already assigned to this department
-        if (student.departmentId === department._id) {
+        const studentDepartmentIds = student.departmentIds || (student.departmentId ? [student.departmentId] : [])
+        if (studentDepartmentIds.includes(department._id)) {
           toast.error("Student is already assigned to this department")
           return
         }
 
-        // Only allow dropping unassigned students
-        if (student.departmentId) {
-          toast.error("Student is already assigned to another department")
-          return
-        }
-
+        // Allow dropping both unassigned students and students from other departments
         onStudentDrop(student, department)
       } catch (error) {
         console.error("Error parsing dropped student data:", error)
@@ -131,7 +178,7 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
       onDrop={handleDrop}
     >
       {/* Enhanced Drop Zone Overlay */}
-      {dropZoneActive && (
+      {/* {dropZoneActive && (
         <div className="absolute inset-6 bg-gradient-to-br from-blue-100/90 to-purple-100/90 rounded-2xl border-3 border-blue-400 border-dashed backdrop-blur-sm z-20 flex items-center justify-center animate-pulse">
           <div className="text-center">
             <div className="w-20 h-20 mx-auto mb-4 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
@@ -142,6 +189,28 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
             </div>
             <div className="text-blue-600 text-lg">
               Assign to {department.name}
+            </div>
+            <div className="text-blue-500 text-sm mt-2">
+              {departmentStudents.length} students currently assigned
+            </div>
+          </div>
+        </div>
+      )} */}
+
+      {dropZoneActive && (
+        <div className="absolute inset-6 bg-gradient-to-br from-blue-100/90 to-purple-100/90 rounded-2xl border-3 border-blue-400 border-dashed backdrop-blur-sm z-20 flex items-center justify-center animate-pulse">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+              <Users className="w-10 h-10 text-white" />
+            </div>
+            <div className="text-blue-700 text-2xl font-bold mb-2">
+              Drop student here
+            </div>
+            <div className="text-blue-600 text-lg">
+              {draggedStudent && draggedStudent.departmentIds && draggedStudent.departmentIds.length > 0
+                ? `Add to ${department.name}`
+                : `Assign to ${department.name}`
+              }
             </div>
             <div className="text-blue-500 text-sm mt-2">
               {departmentStudents.length} students currently assigned
@@ -178,6 +247,11 @@ export function DepartmentTab({ department, onEdit, onDelete, onStudentDrop, onS
         <div>
           <div className="flex items-center gap-3 mb-0">
             <h2 className="text-2xl font-bold text-gray-800">{department.name}</h2>
+            {/* <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
+              <Users className="h-3 w-3" />
+              {departmentStudents.length} Students
+            </Badge> */}
+            
             <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
               <Users className="h-3 w-3" />
               {departmentStudents.length} Students
