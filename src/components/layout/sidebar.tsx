@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Bed,
+  CalendarCheck,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -28,13 +29,14 @@ interface SidebarProps {
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Buildings", href: "/buildings", icon: Building },
   { name: "Student Registration", href: "/register-students", icon: Users },
   { name: "Student Profiles", href: "/student-profiles", icon: UserCheck },
+  { name: "Attendance", href: "/attendance", icon: CalendarCheck },
   { name: "Departments", href: "/departments", icon: Briefcase },
+  { name: "Buildings", href: "/buildings", icon: Building },
   { name: "Room Allocation", href: "/room-allocation", icon: Bed },
-  { name: "ID Conversion", href: "/id-conversion", icon: RefreshCw },
   { name: "Birthdays", href: "/birthdays", icon: Cake },
+  { name: "ID Conversion", href: "/id-conversion", icon: RefreshCw },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ]

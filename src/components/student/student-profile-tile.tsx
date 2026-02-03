@@ -112,7 +112,7 @@ export function StudentProfileTile({
       <CardHeader className="p-2 py-0 h-25">
         <div className="flex items-center space-x-3">
           <Avatar className="h-24 w-24 ring-2 ring-white shadow-sm">
-            <AvatarImage src={`https://res.cloudinary.com/dap7sy5lk/image/upload/svm-hostel-students/${student.enquiryId}.jpg` || "/placeholder.svg"} alt={fullName} />
+            <AvatarImage src={`https://res.cloudinary.com/dap7sy5lk/image/upload/svm-hostel-students/${student.enquiryId}.jpg` || "/placeholder.svg"} alt={fullName} className="brightness-125"/>
             <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
               {initials}
             </AvatarFallback>
